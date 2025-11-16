@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ingestion
+  labels:
+    app: ingestion
+    version: 0.0.1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: ingestion
+  template:
+    metadata:
+      name: ingestion
+      labels:
+        app: ingestion
+    spec:
+      containers:
+        - name: ingestion
+          image: localhost:5001/ingestion:0.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 7070
+              protocol: TCP
+      restartPolicy: Always
