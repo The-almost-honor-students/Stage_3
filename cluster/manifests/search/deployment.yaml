@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search
+  labels:
+    app: search
+    version: 0.0.1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: search
+  template:
+    metadata:
+      name: search
+      labels:
+        app: search
+    spec:
+      containers:
+        - name: search
+          image: localhost:5001/search:0.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 9090
+              protocol: TCP
+          env:
+            - name: MONGO_URL
+              value: mongodb://mongodb_books:27017
+      restartPolicy: Always
