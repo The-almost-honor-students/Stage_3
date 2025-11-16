@@ -13,7 +13,7 @@ COPY pom.xml pom.xml
 COPY src /app/src
 RUN mvn -B -e clean install -DskipTests
 
-FROM openjdk:17-slim
+FROM eclipse-temurin:17-jdk
 
 WORKDIR /app
 COPY --from=builder /app/target/ingestion-app.jar /app.jar
