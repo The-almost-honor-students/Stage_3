@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: indexing
+spec:
+  selector:
+    app: indexing
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 7070
+  type: ClusterIP
+  

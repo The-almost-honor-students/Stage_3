@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: indexing
+  labels:
+    app: indexing
+    version: 0.0.1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: indexing
+  template:
+    metadata:
+      name: indexing
+      labels:
+        app: indexing
+    spec:
+      containers:
+        - name: indexing
+          image: localhost:5001/indexing:0.0.1
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+          env:
+            - name: MONGO_URL
+              value: mongodb://mongodb_books:27017
+      restartPolicy: Always
