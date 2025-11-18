@@ -28,7 +28,7 @@ services:
     networks:
       - mongo-net
   ingestion:
-    image: ingestion:latest
+    image: giselabcr8888/ingestion:latest
     container_name: ingestion
     ports:
       - "7070:7070"
@@ -38,7 +38,7 @@ services:
     volumes:
       - engine-volume:/app
   indexing:
-    image: indexing:latest
+    image: giselabcr8888/indexing:latest
     container_name: indexing
     environment:
       - MONGO_URL=mongodb://mongodb_books:27017
@@ -50,7 +50,7 @@ services:
     volumes:
       - engine-volume:/app
   search:
-    image: search:latest
+    image: giselabcr8888/search:latest
     container_name: search
     environment:
       - MONGO_URL=mongodb://mongodb_books:27017
@@ -78,7 +78,6 @@ services:
       - engine-net
     volumes:
       - engine-volume:/app/data
-
 
 networks:
   mongo-net:
