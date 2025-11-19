@@ -14,5 +14,6 @@
         <module>indexing</module>
         <module>search</module>
         <module>control</module>
+        <module>nginx</module>
     </modules>
 </project>
