@@ -16,26 +16,26 @@ services:
       - search3
 
   search1:
-    image: search_service:latest
+    image: giselabcr8888/search:latest
     container_name: search1
     expose:
-      - "8080"
+      - "8081"
     networks:
       - search_net
 
   search2:
-    image: search_service:latest
+    image: giselabcr8888/search:latest
     container_name: search2
     expose:
-      - "8080"
+      - "8082"
     networks:
       - search_net
 
   search3:
-    image: search_service:latest
+    image: giselabcr8888/search:latest
     container_name: search3
     expose:
-      - "8080"
+      - "8083"
     networks:
       - search_net
 
