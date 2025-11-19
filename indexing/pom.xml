@@ -61,6 +61,11 @@
             <artifactId>dotenv-java</artifactId>
             <version>3.2.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>5.4.0</version>
+        </dependency>
     </dependencies>
 
     <build>
