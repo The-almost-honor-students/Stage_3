@@ -10,10 +10,9 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>ingestion</module>
-        <module>indexing</module>
+        <module>crawler</module>
+        <module>indexer</module>
         <module>search</module>
         <module>control</module>
-        <module>nginx</module>
     </modules>
 </project>
