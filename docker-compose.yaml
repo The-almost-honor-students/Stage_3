@@ -1,16 +1,6 @@
 version: "3.8"
 
 services:
-  nginx:
-    image: nginx:trixie-perl
-    container_name: nginx-lb
-    ports:
-      - "8000:8000"
-    volumes:
-      - ./resolve.conf:/etc/nginx/conf.d/default.conf:ro
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    restart: unless-stopped
   mongo:
     image: mongo:latest
     container_name: mongodb_books
@@ -37,6 +27,7 @@ services:
       - mongo
     networks:
       - mongo-net
+
   ingestion:
     image: giselabcr8888/ingestion:multi
     container_name: ingestion
@@ -47,6 +38,7 @@ services:
       - engine-net
     volumes:
       - engine-volume:/app
+
   indexing:
     image: giselabcr8888/indexing:multi
     container_name: indexing
@@ -61,6 +53,7 @@ services:
       - engine-net
     volumes:
       - engine-volume:/app
+
   search:
     image: giselabcr8888/search:multi
     container_name: search
@@ -75,28 +68,12 @@ services:
       - engine-net
     volumes:
       - engine-volume:/app/data
-#  control:
-#    image: control:latest
-#    ports:
-#      - "6060:6060"
-#    depends_on:
-#      - indexing
-#      - ingestion
-#      - search
-#    container_name: control
-#    environment:
-#      - INGESTION_URL=http://ingestion:7070
-#      - INDEX_URL=http://indexing:8080
-#      - SEARCH_URL=http://search:9090
-#    networks:
-#      - engine-net
-#    volumes:
-#      - engine-volume:/app/data
 
 networks:
   mongo-net:
     driver: bridge
   engine-net:
     driver: bridge
+
 volumes:
   engine-volume:
