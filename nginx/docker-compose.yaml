@@ -16,7 +16,7 @@ services:
       - search3
 
   search1:
-    image: giselabcr8888/search:latest
+    image: giselabcr8888/search:multi
     container_name: search1
     expose:
       - "8081"
@@ -24,7 +24,7 @@ services:
       - search_net
 
   search2:
-    image: giselabcr8888/search:latest
+    image: giselabcr8888/search:multi
     container_name: search2
     expose:
       - "8082"
@@ -32,7 +32,7 @@ services:
       - search_net
 
   search3:
-    image: giselabcr8888/search:latest
+    image: giselabcr8888/search:multi
     container_name: search3
     expose:
       - "8083"
