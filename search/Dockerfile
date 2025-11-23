@@ -13,7 +13,7 @@ COPY pom.xml pom.xml
 COPY src /app/src
 RUN mvn -B -e clean install -DskipTests
 
-FROM eclipse-temurin:17-jdk
+FROM openjdk:17-slim
 
 WORKDIR /app
 COPY --from=builder /app/target/search-app.jar /app.jar
