@@ -44,6 +44,8 @@ services:
       - MONGO_URL=mongodb://mongodb_books:27017
     ports:
       - "8080:8080"
+    depends_on:
+      - mongo
     networks:
       - mongo-net
       - engine-net
@@ -56,6 +58,8 @@ services:
       - MONGO_URL=mongodb://mongodb_books:27017
     ports:
       - "9090:9090"
+    depends_on:
+      - mongo
     networks:
       - mongo-net
       - engine-net
