@@ -28,7 +28,7 @@ services:
     networks:
       - mongo-net
   ingestion:
-    image: giselabcr8888/ingestion:latest
+    image: giselabcr8888/ingestion:multi
     container_name: ingestion
     ports:
       - "7070:7070"
@@ -38,7 +38,7 @@ services:
     volumes:
       - engine-volume:/app
   indexing:
-    image: giselabcr8888/indexing:latest
+    image: giselabcr8888/indexing:multi
     container_name: indexing
     environment:
       - MONGO_URL=mongodb://mongodb_books:27017
@@ -50,7 +50,7 @@ services:
     volumes:
       - engine-volume:/app
   search:
-    image: giselabcr8888/search:latest
+    image: giselabcr8888/search:multi
     container_name: search
     environment:
       - MONGO_URL=mongodb://mongodb_books:27017
@@ -61,23 +61,23 @@ services:
       - engine-net
     volumes:
       - engine-volume:/app/data
-  control:
-    image: control:latest
-    ports:
-      - "6060:6060"
-    depends_on:
-      - indexing
-      - ingestion
-      - search
-    container_name: control
-    environment:
-      - INGESTION_URL=http://ingestion:7070
-      - INDEX_URL=http://indexing:8080
-      - SEARCH_URL=http://search:9090
-    networks:
-      - engine-net
-    volumes:
-      - engine-volume:/app/data
+#  control:
+#    image: control:latest
+#    ports:
+#      - "6060:6060"
+#    depends_on:
+#      - indexing
+#      - ingestion
+#      - search
+#    container_name: control
+#    environment:
+#      - INGESTION_URL=http://ingestion:7070
+#      - INDEX_URL=http://indexing:8080
+#      - SEARCH_URL=http://search:9090
+#    networks:
+#      - engine-net
+#    volumes:
+#      - engine-volume:/app/data
 
 networks:
   mongo-net:
