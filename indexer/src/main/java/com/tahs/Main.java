@@ -115,16 +115,24 @@ public class Main {
         @NotNull
         private static IndexService getIndexService(MongoClient mongoClient, AppConfig appConfig) {
                 var hazelcastConfig = new com.hazelcast.config.Config();
+                var mapConfig = new com.hazelcast.config.MapConfig("inverted-index")
+                                .setBackupCount(1)
+                                .setAsyncBackupCount(1);
+                hazelcastConfig.addMapConfig(mapConfig);
+
                 var hazelcastInstance = com.hazelcast.core.Hazelcast.newHazelcastInstance(hazelcastConfig);
 
                 var indexRepository = new MongoInvertedIndexRepository(mongoClient, appConfig.databaseName(),
                                 appConfig.collectionIndexName());
+                var cachedIndexRepository = new com.tahs.infrastructure.persistence.CachedInvertedIndexRepository(
+                                indexRepository, hazelcastInstance);
+
                 var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(),
                                 appConfig.collectionMetadataName());
                 var cachedMetadataRepository = new com.tahs.infrastructure.persistence.CachedMetadataRepository(
                                 metadataRepository, hazelcastInstance);
 
                 var gutenbergHeaderSerializer = new GutenbergHeaderSerializer();
-                return new IndexService(indexRepository, cachedMetadataRepository, gutenbergHeaderSerializer);
+                return new IndexService(cachedIndexRepository, cachedMetadataRepository, gutenbergHeaderSerializer);
         }
 }
