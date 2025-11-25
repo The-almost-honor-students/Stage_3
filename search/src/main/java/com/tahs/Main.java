@@ -4,7 +4,8 @@ import com.mongodb.client.MongoClients;
 import com.tahs.application.dto.SearchDto;
 import com.tahs.application.usecase.QueryBooksUseCase;
 import com.tahs.config.AppConfig;
-import com.tahs.infrastructure.persistence.MongoInvertedIndexRepository;
+import com.tahs.infrastructure.hazelcast.HazelcastClientFactory;
+import com.tahs.infrastructure.persistence.HazelcastInvertedIndexRepository;
 import com.tahs.infrastructure.persistence.MongoMetadataRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.javalin.Javalin;
@@ -26,16 +27,19 @@ public class Main {
 
     private static Javalin createApp(AppConfig appConfig) {
         var mongoClient = MongoClients.create(appConfig.dbUrl());
-        var indexService = new MongoInvertedIndexRepository(mongoClient, appConfig.databaseName(), appConfig.collectionIndexName());
-        var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(), appConfig.collectionMetadataName());
-        var queryUseCase = new QueryBooksUseCase(indexService,metadataRepository);
+        var hazelcast = com.tahs.infrastructure.hazelcast.HazelcastClientFactory.create(appConfig.hazelcastHost(),
+                appConfig.hazelcastPort());
+        var indexService = new HazelcastInvertedIndexRepository(hazelcast);
+        var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(),
+                appConfig.collectionMetadataName());
+        var queryUseCase = new QueryBooksUseCase(indexService, metadataRepository);
 
         Javalin app = Javalin.create(config -> config.http.defaultContentType = "application/json");
 
         app.get("/search", ctx -> {
             try {
-                Set<String> allowedParams = Set.of("q","author", "language", "year");
-                Map<String, List<String>> filteredParams =ctx.queryParamMap().entrySet().stream()
+                Set<String> allowedParams = Set.of("q", "author", "language", "year");
+                Map<String, List<String>> filteredParams = ctx.queryParamMap().entrySet().stream()
                         .filter(e -> allowedParams.contains(e.getKey()))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
@@ -68,19 +72,27 @@ public class Main {
 
         String databaseName = Optional.ofNullable(dotenv.get("DATABASE_NAME"))
                 .orElse(System.getenv("DATABASE_NAME"));
-        String collectionMetaData  = Optional.ofNullable(dotenv.get("COLLECTION_METADATA"))
+        String collectionMetaData = Optional.ofNullable(dotenv.get("COLLECTION_METADATA"))
                 .orElse(System.getenv("COLLECTION_METADATA"));
-        String collectionIndex  = Optional.ofNullable(dotenv.get("COLLECTION_INDEX"))
+        String collectionIndex = Optional.ofNullable(dotenv.get("COLLECTION_INDEX"))
                 .orElse(System.getenv("COLLECTION_INDEX"));
         String portStr = Optional.ofNullable(dotenv.get("PORT"))
                 .orElse(System.getenv("PORT"));
         int port = portStr != null ? Integer.parseInt(portStr) : 9090;
+        String hazelcastHost = Optional.ofNullable(dotenv.get("HAZELCAST_HOST"))
+                .orElse(System.getenv("HAZELCAST_HOST"));
+        int hazelcastPort = Optional.ofNullable(dotenv.get("HAZELCAST_PORT"))
+                .map(Integer::parseInt)
+                .orElse(Optional.ofNullable(System.getenv("HAZELCAST_PORT"))
+                        .map(Integer::parseInt)
+                        .orElse(5701));
         return new AppConfig(
                 dbUrl,
                 databaseName,
                 collectionMetaData,
                 collectionIndex,
-                port
-        );
+                port,
+                hazelcastHost,
+                hazelcastPort);
     }
 }
