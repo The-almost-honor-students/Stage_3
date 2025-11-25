@@ -20,11 +20,9 @@ public class CachedInvertedIndexRepository implements InvertedIndexRepository {
 
     @Override
     public boolean indexBook(String bookId, Set<String> terms) {
-        // Update Hazelcast
         for (String term : terms) {
             invertedIndex.executeOnKey(term, new AddBookEntryProcessor(bookId));
         }
-        // Update Delegate (Mongo)
         return delegate.indexBook(bookId, terms);
     }
 
@@ -36,7 +34,6 @@ public class CachedInvertedIndexRepository implements InvertedIndexRepository {
 
     @Override
     public IndexStats getStats() {
-        // We can return stats from delegate as it's the persistent store
         return delegate.getStats();
     }
 }
