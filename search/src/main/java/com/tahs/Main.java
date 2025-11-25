@@ -27,7 +27,7 @@ public class Main {
 
     private static Javalin createApp(AppConfig appConfig) {
         var mongoClient = MongoClients.create(appConfig.dbUrl());
-        var hazelcast = com.tahs.infrastructure.hazelcast.HazelcastClientFactory.create(appConfig.hazelcastHost(),
+        var hazelcast = HazelcastClientFactory.create(appConfig.hazelcastHost(),
                 appConfig.hazelcastPort());
         var indexService = new HazelcastInvertedIndexRepository(hazelcast);
         var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(),
