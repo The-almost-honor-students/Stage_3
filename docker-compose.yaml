@@ -1,76 +1,114 @@
 version: "3.8"
 
 services:
-  mongo:
-    image: mongo:latest
-    container_name: mongodb_books
+  # Hazelcast Server
+  hazelcast:
+    image: hazelcast/hazelcast:5.4.0
+    container_name: hazelcast
     environment:
-      - MONGO_INITDB_DATABASE=books
+      - HZ_CLUSTERNAME=books-cluster
     ports:
-      - "27017:27017"
+      - "5701:5701"
     volumes:
-      - ./mongo_data:/data/db
+      - ./hazelcast-config/hazelcast.yaml:/opt/hazelcast/config_ext/hazelcast.yaml:ro
+    command: ["hz", "start", "-c", "/opt/hazelcast/config_ext/hazelcast.yaml"]
     networks:
-      - mongo-net
+      - hazelcast-net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5701/hazelcast/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
-  mongo-express:
-    image: mongo-express:latest
-    container_name: mongo_express
+  # Hazelcast Management Center (opcional, para monitoreo)
+  hazelcast-mc:
+    image: hazelcast/management-center:5.4.0
+    container_name: hazelcast-mc
     environment:
-      - ME_CONFIG_MONGODB_SERVER=mongodb_books
-      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+      - MC_DEFAULT_CLUSTER=books-cluster
+      - MC_DEFAULT_CLUSTER_MEMBERS=hazelcast:5701
     ports:
-      - "8085:8085"
+      - "8081:8080"
     depends_on:
-      - mongo
+      hazelcast:
+        condition: service_healthy
     networks:
-      - mongo-net
+      - hazelcast-net
 
   ingestion:
-    image: giselabcr8888/ingestion:multi
+    build:
+      context: ./crawler
+      dockerfile: Dockerfile
     container_name: ingestion
+    environment:
+      - PORT=7070
     ports:
       - "7070:7070"
     networks:
-      - mongo-net
+      - hazelcast-net
       - engine-net
     volumes:
       - engine-volume:/app
 
   indexing:
-    image: giselabcr8888/indexing:multi
+    build:
+      context: ./indexer
+      dockerfile: Dockerfile
     container_name: indexing
     environment:
-      - MONGO_URL=mongodb://mongodb_books:27017
+      - HAZELCAST_HOST=hazelcast
+      - HAZELCAST_PORT=5701
+      - PORT=8080
     ports:
       - "8080:8080"
     depends_on:
-      - mongo
+      hazelcast:
+        condition: service_healthy
     networks:
-      - mongo-net
+      - hazelcast-net
       - engine-net
     volumes:
       - engine-volume:/app
 
   search:
-    image: giselabcr8888/search:multi
+    build:
+      context: ./search
+      dockerfile: Dockerfile
     container_name: search
     environment:
-      - MONGO_URL=mongodb://mongodb_books:27017
+      - HAZELCAST_HOST=hazelcast
+      - HAZELCAST_PORT=5701
+      - PORT=9090
     ports:
       - "9090:9090"
     depends_on:
-      - mongo
+      hazelcast:
+        condition: service_healthy
     networks:
-      - mongo-net
+      - hazelcast-net
       - engine-net
     volumes:
       - engine-volume:/app/data
 
+  # Nginx - Reverse Proxy / Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - search
+      - indexing
+      - ingestion
+    networks:
+      - hazelcast-net
+      - engine-net
+
 networks:
-  mongo-net:
+  hazelcast-net:
     driver: bridge
   engine-net:
     driver: bridge

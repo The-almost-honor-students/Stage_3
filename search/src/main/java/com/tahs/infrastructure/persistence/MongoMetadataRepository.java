@@ -5,11 +5,8 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.tahs.application.ports.MetadataRepository;
-import com.tahs.domain.BookMetadata;
+import com.tahs.domain.Book;
 import org.bson.Document;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class MongoMetadataRepository implements MetadataRepository {
 
@@ -22,12 +19,12 @@ public class MongoMetadataRepository implements MetadataRepository {
     }
 
     @Override
-    public BookMetadata getById(String bookId) {
+    public Book getById(String bookId) {
         Document bookDocument =  this.collection.find((Filters.eq("book_id", Integer.parseInt(bookId)))).first();
         if(bookDocument == null) {
             throw new IllegalArgumentException("Term not found");
         }
-        return new BookMetadata(
+        return new Book(
                 bookDocument.getInteger("book_id"),
                 bookDocument.getString("title"),
                 bookDocument.getString("author"),

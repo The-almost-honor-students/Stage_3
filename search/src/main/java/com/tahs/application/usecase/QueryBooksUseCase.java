@@ -3,7 +3,7 @@ package com.tahs.application.usecase;
 import com.tahs.application.dto.SearchDto;
 import com.tahs.application.ports.InvertedIndexRepository;
 import com.tahs.application.ports.MetadataRepository;
-import com.tahs.domain.BookMetadata;
+import com.tahs.domain.Book;
 import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +22,7 @@ public class QueryBooksUseCase {
     public SearchDto execute(Map<String, List<String>> params) {
         var term = getTermValue(params);
         var booksTerm = invertedIndexRepository.getBooksByTerm(term);
-        List<BookMetadata> books = new ArrayList<>();
+        List<Book> books = new ArrayList<>();
         for (String bookId : booksTerm.booksId()){
             books.add(metadataRepository.getById(bookId));
         }
@@ -35,7 +35,7 @@ public class QueryBooksUseCase {
         );
     }
 
-    private boolean matches(BookMetadata book, Map<String, List<String>> params) {
+    private boolean matches(Book book, Map<String, List<String>> params) {
         if (params.containsKey("author")) {
             return book.author().equals(getAuthorValue(params));
         }

@@ -1,0 +1,60 @@
+hazelcast:
+  cluster-name: books-cluster
+
+  network:
+    port:
+      auto-increment: true
+      port: 5701
+    rest-api:
+      enabled: true
+      endpoint-groups:
+        CLUSTER_READ:
+          enabled: true
+        CLUSTER_WRITE:
+          enabled: true
+        DATA:
+          enabled: true
+        HEALTH_CHECK:
+          enabled: true
+    join:
+      multicast:
+        enabled: false
+      tcp-ip:
+        enabled: true
+        member-list:
+          - hazelcast
+
+  map:
+    inverted-index:
+      backup-count: 1
+      async-backup-count: 1
+      time-to-live-seconds: 0
+      max-idle-seconds: 0
+      eviction:
+        eviction-policy: LRU
+        max-size-policy: PER_NODE
+        size: 100000
+      statistics-enabled: true
+      per-entry-stats-enabled: true
+
+    book-metadata:
+      backup-count: 1
+      async-backup-count: 1
+      time-to-live-seconds: 0
+      max-idle-seconds: 0
+      eviction:
+        eviction-policy: LRU
+        max-size-policy: PER_NODE
+        size: 50000
+      statistics-enabled: true
+      per-entry-stats-enabled: true
+
+  serialization:
+    portable-version: 0
+
+  metrics:
+    enabled: true
+    management-center:
+      enabled: true
+      retention-seconds: 5
+

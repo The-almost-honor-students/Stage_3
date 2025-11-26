@@ -1,9 +1,7 @@
 package com.tahs.application.ports;
 
-import com.tahs.domain.BookMetadata;
-
-import java.util.List;
+import com.tahs.domain.Book;
 
 public interface MetadataRepository {
-    BookMetadata getById(String bookId);
+    Book getById(String bookId);
 }

@@ -1,11 +1,12 @@
 package com.tahs;
 
-import com.mongodb.client.MongoClients;
+import com.hazelcast.core.HazelcastInstance;
 import com.tahs.application.dto.SearchDto;
 import com.tahs.application.usecase.QueryBooksUseCase;
 import com.tahs.config.AppConfig;
-import com.tahs.infrastructure.persistence.MongoInvertedIndexRepository;
-import com.tahs.infrastructure.persistence.MongoMetadataRepository;
+import com.tahs.infrastructure.hazelcast.HazelcastClientFactory;
+import com.tahs.infrastructure.persistence.HazelcastInvertedIndexRepository;
+import com.tahs.infrastructure.persistence.HazelcastMetadataRepository;
 import io.github.cdimascio.dotenv.Dotenv;
 import io.javalin.Javalin;
 
@@ -20,22 +21,28 @@ public class Main {
         var dotenv = Dotenv.configure()
                 .ignoreIfMissing()
                 .load();
-        var config = CheckEnvVars(dotenv);
+        var config = checkEnvVars(dotenv);
         createApp(config).start(config.port());
     }
 
     private static Javalin createApp(AppConfig appConfig) {
-        var mongoClient = MongoClients.create(appConfig.dbUrl());
-        var indexService = new MongoInvertedIndexRepository(mongoClient, appConfig.databaseName(), appConfig.collectionIndexName());
-        var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(), appConfig.collectionMetadataName());
-        var queryUseCase = new QueryBooksUseCase(indexService,metadataRepository);
+        // Crear cliente Hazelcast usando la fábrica
+        HazelcastInstance hazelcast = HazelcastClientFactory.create(
+                appConfig.hazelcastHost(),
+                appConfig.hazelcastPort()
+        );
+
+        // Crear repositorios usando Hazelcast
+        var indexRepository = new HazelcastInvertedIndexRepository(hazelcast);
+        var metadataRepository = new HazelcastMetadataRepository(hazelcast);
+        var queryUseCase = new QueryBooksUseCase(indexRepository, metadataRepository);
 
         Javalin app = Javalin.create(config -> config.http.defaultContentType = "application/json");
 
         app.get("/search", ctx -> {
             try {
                 Set<String> allowedParams = Set.of("q","author", "language", "year");
-                Map<String, List<String>> filteredParams =ctx.queryParamMap().entrySet().stream()
+                Map<String, List<String>> filteredParams = ctx.queryParamMap().entrySet().stream()
                         .filter(e -> allowedParams.contains(e.getKey()))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
@@ -51,6 +58,24 @@ public class Main {
                 e.printStackTrace();
             }
         });
+
+        // Endpoint de health check
+        app.get("/health", ctx -> {
+            ctx.json(Map.of(
+                    "status", "UP",
+                    "hazelcast", Map.of(
+                            "host", appConfig.hazelcastHost(),
+                            "port", appConfig.hazelcastPort()
+                    )
+            ));
+        });
+
+        // Shutdown hook para cerrar Hazelcast
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down Hazelcast client...");
+            hazelcast.shutdown();
+        }));
+
         return app;
     }
 
@@ -62,25 +87,21 @@ public class Main {
         }
     }
 
-    private static AppConfig CheckEnvVars(Dotenv dotenv) {
-        String dbUrl = Optional.ofNullable(dotenv.get("MONGO_URL"))
-                .orElse(System.getenv("MONGO_URL"));
+    private static AppConfig checkEnvVars(Dotenv dotenv) {
+        String hazelcastHost = Optional.ofNullable(dotenv.get("HAZELCAST_HOST"))
+                .orElse(Optional.ofNullable(System.getenv("HAZELCAST_HOST"))
+                        .orElse("localhost"));
 
-        String databaseName = Optional.ofNullable(dotenv.get("DATABASE_NAME"))
-                .orElse(System.getenv("DATABASE_NAME"));
-        String collectionMetaData  = Optional.ofNullable(dotenv.get("COLLECTION_METADATA"))
-                .orElse(System.getenv("COLLECTION_METADATA"));
-        String collectionIndex  = Optional.ofNullable(dotenv.get("COLLECTION_INDEX"))
-                .orElse(System.getenv("COLLECTION_INDEX"));
-        String portStr = Optional.ofNullable(dotenv.get("PORT"))
-                .orElse(System.getenv("PORT"));
-        int port = portStr != null ? Integer.parseInt(portStr) : 9090;
-        return new AppConfig(
-                dbUrl,
-                databaseName,
-                collectionMetaData,
-                collectionIndex,
-                port
-        );
+        int hazelcastPort = Integer.parseInt(
+                Optional.ofNullable(dotenv.get("HAZELCAST_PORT"))
+                        .orElse(Optional.ofNullable(System.getenv("HAZELCAST_PORT"))
+                                .orElse("5701")));
+
+        int port = Integer.parseInt(
+                Optional.ofNullable(dotenv.get("PORT"))
+                        .orElse(Optional.ofNullable(System.getenv("PORT"))
+                                .orElse("9090")));
+
+        return new AppConfig(hazelcastHost, hazelcastPort, port);
     }
 }
