@@ -5,15 +5,12 @@ import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializer;
 import com.google.gson.Gson;
 import com.hazelcast.core.HazelcastInstance;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
 import com.tahs.application.exceptions.BookNotFound;
 import com.tahs.application.usecase.IndexService;
 import com.tahs.config.AppConfig;
 import com.tahs.infrastructure.hazelcast.HazelcastClientFactory;
 import com.tahs.infrastructure.persistence.HazelcastInvertedIndexRepository;
 import com.tahs.infrastructure.persistence.HazelcastMetadataRepository;
-import com.tahs.infrastructure.persistence.MongoMetadataRepository;
 import com.tahs.infrastructure.serialization.books.GutenbergHeaderSerializer;
 import io.javalin.Javalin;
 import io.github.cdimascio.dotenv.Dotenv;
@@ -36,24 +33,15 @@ public class Main {
                 config.hazelcastPort()
         );
 
-        // MongoDB solo para leer los libros originales (si lo necesitas)
-        MongoClient mongoClient = null;
-        if (config.dbUrl() != null) {
-            mongoClient = MongoClients.create(config.dbUrl());
-        }
-
-        final MongoClient finalMongoClient = mongoClient;
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Shutting down Hazelcast client...");
             hazelcast.shutdown();
-            if (finalMongoClient != null) {
-                finalMongoClient.close();
-            }
         }));
 
-        createApp(config, hazelcast, mongoClient).start(config.port());
+        createApp(config, hazelcast).start(config.port());
     }
 
-    public static Javalin createApp(AppConfig config, HazelcastInstance hazelcast, MongoClient mongoClient) {
+    public static Javalin createApp(AppConfig config, HazelcastInstance hazelcast) {
         Javalin app = Javalin.create(c -> c.http.defaultContentType = "application/json");
 
         Gson gson = new GsonBuilder()
@@ -65,16 +53,6 @@ public class Main {
         var indexRepository = new HazelcastInvertedIndexRepository(hazelcast);
         var metadataRepository = new HazelcastMetadataRepository(hazelcast);
         var gutenbergHeaderSerializer = new GutenbergHeaderSerializer();
-
-        // Si necesitas leer de MongoDB los libros originales
-        MongoMetadataRepository mongoMetadataRepo = null;
-        if (mongoClient != null) {
-            mongoMetadataRepo = new MongoMetadataRepository(
-                    mongoClient,
-                    config.databaseName(),
-                    config.collectionMetadataName()
-            );
-        }
 
         var indexService = new IndexService(indexRepository, metadataRepository, gutenbergHeaderSerializer);
 
@@ -125,8 +103,11 @@ public class Main {
 
         app.get("/health", ctx -> {
             ctx.result(gson.toJson(Map.of(
-                    "status", "ok",
-                    "hazelcast", "connected"
+                    "status", "UP",
+                    "hazelcast", Map.of(
+                            "host", config.hazelcastHost(),
+                            "port", config.hazelcastPort()
+                    )
             )));
         });
 
@@ -149,11 +130,5 @@ public class Main {
                                 .orElse("8080")));
 
         return new AppConfig(hazelcastHost, hazelcastPort, port);
-    }
-
-    private static String getEnv(Dotenv dotenv, String key, String defaultValue) {
-        return Optional.ofNullable(dotenv.get(key))
-                .or(() -> Optional.ofNullable(System.getenv(key)))
-                .orElse(defaultValue);
     }
 }
