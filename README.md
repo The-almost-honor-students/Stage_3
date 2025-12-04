@@ -22,7 +22,7 @@ In this stage, four independent services —**Ingestion**, **Indexing**, **Searc
 
 ## 1. Architecture Overview
 
-Each service runs as an independent module with its own HTTP server (based on **Javalin**) and configuration managed through `.env` files located in the `resources` directory.  
+Each service runs as an independent module with its own HTTP server (based on **Javalin**). Configuration can be managed through optional `.env` files or environment variables passed via Docker.  
 The services communicate through **REST APIs**, and **MongoDB** acts as the main storage system for both metadata and inverted indexes.
 
 The project follows **Clean Architecture / Hexagonal Architecture** principles, with clear separation of responsibilities:
@@ -37,7 +37,7 @@ The project follows **Clean Architecture / Hexagonal Architecture** principles, 
 
 - Modular implementation of **Ingestion**, **Indexing**, **Search**, and **Control** services.  
 - REST APIs built with **Javalin**.  
-- Configuration managed via `.env` files under `resources/`.  
+- Flexible configuration via environment variables (supports both `.env` files and Docker environment variables).  
 - Persistent data storage in **MongoDB** (`metadata` and `inverted_index` collections).  
 - Text preprocessing and tokenization for indexing.  
 - Workflow orchestration through the **Control Service**.  
@@ -49,8 +49,13 @@ The project follows **Clean Architecture / Hexagonal Architecture** principles, 
 
 ## 3. Environment Variables Configuration
 
-Each service includes its own `.env` file inside the `resources/` directory.  
-These files define URLs, ports, and database parameters without modifying the source code.
+The services support two configuration methods:
+- **`.env` files** (optional): For local development, place `.env` files inside each service's `resources/` directory.  
+- **Docker environment variables** (recommended): When using Docker, all variables are defined in `docker-compose.yaml` and passed automatically.
+
+**Note**: If a `.env` file is not found, the services automatically fallback to system environment variables, making `.env` files **optional when using Docker**.
+
+### Configuration Variables by Service
 
 ### Ingestion Service
 
@@ -135,18 +140,18 @@ All services are **dockerized** and can be executed independently or together us
 
 ### Steps to Run
 
-1. Create the `.env` files in each service’s `resources` folder:
+1. **Set the NODE_IP environment variable** (required for multi-node deployment):
 
+   ```bash
+   export NODE_IP=10.26.14.223  # Use the IP of your current node
    ```
-   ingestion/resources/.env
-   indexing/resources/.env
-   search/resources/.env
-   control/resources/.env
-   ```
+
+   > **Note**: `.env` files are **NOT required** when using Docker. All environment variables are defined in `docker-compose.yaml` and passed automatically to the containers.
 
 2. From the project root directory, run:
 
    ```bash
+   export NODE_IP=10.26.14.223  # Set your current node IP
    docker-compose up --build -d
    ```
 
@@ -275,8 +280,11 @@ The system is configured to run as a distributed cluster across three nodes:
 
 ### Deployment Steps
 
-1. **Prepare Environment Variables**
-   Create a `.env` file on each node with the specific configuration. Templates are provided in `deployment/nodeX-env-template.txt`.
+1. **Set Environment Variables**
+   On each node, set the `NODE_IP` variable before running docker-compose:
+   ```bash
+   export NODE_IP=<current_node_ip>  # e.g., 10.26.14.223
+   ```
 
 2. **Deploy to Nodes**
    Use the provided deployment script to deploy to each node:
