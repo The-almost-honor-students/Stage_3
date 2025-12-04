@@ -1,6 +1,6 @@
-# Stage 2 — The Almost Honor Students
+# Stage 3 — The Almost Honor Students
 
-This project corresponds to **Stage 2** of the *Project Gutenberg Book Search Engine*, developed using a modular and decoupled architecture.  
+This project corresponds to **Stage 3** of the *Project Gutenberg Book Search Engine*, developed using a modular and decoupled architecture.  
 In this stage, four independent services —**Ingestion**, **Indexing**, **Search**, and **Control**— were implemented to handle the complete data flow from book retrieval to indexed search and performance benchmarking.
 
 ---
@@ -255,3 +255,48 @@ Benchmark results are printed to the console and may include:
 
 
 
+
+---
+
+## 8. Cluster Deployment
+
+The system is configured to run as a distributed cluster across three nodes:
+- **Node 1**: 10.26.14.223 (Mongo + ActiveMQ + Hazelcast + Ingestion + Indexing + Search)
+- **Node 2**: 10.26.14.222 (ActiveMQ + Hazelcast + Ingestion + Indexing + Search)
+- **Node 3**: 10.26.14.221 (ActiveMQ + Hazelcast + Ingestion + Indexing + Search)
+
+### Prerequisites
+- Docker and Docker Compose installed on all nodes.
+- Network connectivity between nodes on ports:
+  - **5701** (Hazelcast)
+  - **61616** (ActiveMQ)
+  - **9090** (Search Service)
+  - **8000** (NGINX Load Balancer)
+
+### Deployment Steps
+
+1. **Prepare Environment Variables**
+   Create a `.env` file on each node with the specific configuration. Templates are provided in `deployment/nodeX-env-template.txt`.
+
+2. **Deploy to Nodes**
+   Use the provided deployment script to deploy to each node:
+   ```bash
+   ./deployment/deploy-node.sh <node_ip>
+   ```
+   Or manually copy the project and run:
+   ```bash
+   docker-compose -f docker-compose-cluster.yaml up -d
+   ```
+
+3. **Start Load Balancer**
+   On the machine hosting NGINX (can be any node or a separate one):
+   ```bash
+   cd nginx
+   docker-compose up -d
+   ```
+   The search service will be available at `http://<nginx-ip>:8000/search`.
+
+### Architecture
+- **Hazelcast**: Forms a TCP/IP cluster across all 3 nodes for distributed caching of the inverted index.
+- **ActiveMQ**: Configured as a Network of Brokers, allowing seamless message propagation between nodes.
+- **NGINX**: Distributes search traffic across the available Search Service instances using a `least_conn` strategy.
