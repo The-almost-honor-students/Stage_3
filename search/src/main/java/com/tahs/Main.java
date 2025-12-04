@@ -25,17 +25,20 @@ public class Main {
     }
 
     private static Javalin createApp(AppConfig appConfig) {
+        var hazelcast = HazelcastClientFactory.create();
         var mongoClient = MongoClients.create(appConfig.dbUrl());
-        var indexService = new MongoInvertedIndexRepository(mongoClient, appConfig.databaseName(), appConfig.collectionIndexName());
-        var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(), appConfig.collectionMetadataName());
-        var queryUseCase = new QueryBooksUseCase(indexService,metadataRepository);
+        var indexService = new MongoInvertedIndexRepository(mongoClient, appConfig.databaseName(),
+                appConfig.collectionIndexName());
+        var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(),
+                appConfig.collectionMetadataName());
+        var queryUseCase = new QueryBooksUseCase(indexService, metadataRepository);
 
         Javalin app = Javalin.create(config -> config.http.defaultContentType = "application/json");
 
         app.get("/search", ctx -> {
             try {
-                Set<String> allowedParams = Set.of("q","author", "language", "year");
-                Map<String, List<String>> filteredParams =ctx.queryParamMap().entrySet().stream()
+                Set<String> allowedParams = Set.of("q", "author", "language", "year");
+                Map<String, List<String>> filteredParams = ctx.queryParamMap().entrySet().stream()
                         .filter(e -> allowedParams.contains(e.getKey()))
                         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
@@ -68,9 +71,9 @@ public class Main {
 
         String databaseName = Optional.ofNullable(dotenv.get("DATABASE_NAME"))
                 .orElse(System.getenv("DATABASE_NAME"));
-        String collectionMetaData  = Optional.ofNullable(dotenv.get("COLLECTION_METADATA"))
+        String collectionMetaData = Optional.ofNullable(dotenv.get("COLLECTION_METADATA"))
                 .orElse(System.getenv("COLLECTION_METADATA"));
-        String collectionIndex  = Optional.ofNullable(dotenv.get("COLLECTION_INDEX"))
+        String collectionIndex = Optional.ofNullable(dotenv.get("COLLECTION_INDEX"))
                 .orElse(System.getenv("COLLECTION_INDEX"));
         String portStr = Optional.ofNullable(dotenv.get("PORT"))
                 .orElse(System.getenv("PORT"));
@@ -80,7 +83,6 @@ public class Main {
                 databaseName,
                 collectionMetaData,
                 collectionIndex,
-                port
-        );
+                port);
     }
 }
