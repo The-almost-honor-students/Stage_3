@@ -111,6 +111,11 @@ INDEXING_URL=http://localhost:8080
 SEARCH_URL=http://localhost:9090
 ```
 
+
+> **💡 When are `.env` files needed?**  
+> - **Running with Docker** → `.env` files are **NOT needed**. Docker Compose passes all variables automatically.  
+> - **Running locally without Docker** → Create `.env` files in `resources/` directory with the variables shown above.
+
 ---
 
 ## 4. Building the Project
@@ -148,14 +153,14 @@ All services are **dockerized** and can be executed independently or together us
 
    > **Note**: `.env` files are **NOT required** when using Docker. All environment variables are defined in `docker-compose.yaml` and passed automatically to the containers.
 
-2. From the project root directory, run:
+1. From the project root directory, run:
 
    ```bash
-   export NODE_IP=10.26.14.223  # Set your current node IP
    docker-compose up --build -d
    ```
 
-3. Once the containers are running, the services will be available at:
+
+2. Once the containers are running, the services will be available at:
    - Ingestion → `http://localhost:7070`
    - Indexing → `http://localhost:8080`
    - Search → `http://localhost:9090`
