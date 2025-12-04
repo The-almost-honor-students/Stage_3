@@ -28,11 +28,29 @@ services:
     networks:
       - mongo-net
 
+  activemq:
+    image: rmohr/activemq:latest
+    container_name: activemq
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    environment:
+      - ACTIVEMQ_STATIC_TOPICS=events
+    networks:
+      - engine-net
+      - mongo-net
+
   ingestion:
     image: giselabcr8888/ingestion:multi
     container_name: ingestion
     ports:
       - "7070:7070"
+    environment:
+      - MONGO_URL=mongodb://mongodb_books:27017
+      - ACTIVEMQ_URL=failover:(tcp://10.26.14.223:61616,tcp://10.26.14.222:61616,tcp://10.26.14.221:61616)
+    depends_on:
+      - mongo
+      - activemq
     networks:
       - mongo-net
       - engine-net
@@ -44,10 +62,14 @@ services:
     container_name: indexing
     environment:
       - MONGO_URL=mongodb://mongodb_books:27017
+      - NODE_IP=${NODE_IP}
+      - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
     ports:
       - "8080:8080"
+      - "5701:5701"
     depends_on:
       - mongo
+      - activemq
     networks:
       - mongo-net
       - engine-net
@@ -59,10 +81,13 @@ services:
     container_name: search
     environment:
       - MONGO_URL=mongodb://mongodb_books:27017
+      - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
     ports:
       - "9090:9090"
+      - "5701:5701"
     depends_on:
       - mongo
+      - activemq
     networks:
       - mongo-net
       - engine-net
