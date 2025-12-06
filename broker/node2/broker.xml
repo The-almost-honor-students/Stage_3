@@ -29,9 +29,12 @@ under the License.
       <connectors>
          <connector name="netty">tcp://0.0.0.0:61616</connector>
 
-         <connector name="node2">tcp://192.168.1.133:61616</connector>
+         <connector name="node1">tcp://192.168.1.133:61616</connector>
          <connector name="node3">tcp://192.168.1.143:61616</connector>
       </connectors>
+
+      <cluster-user>clusterUser</cluster-user>
+      <cluster-password>secret123</cluster-password>
 
       <cluster-connections>
          <cluster-connection name="my-cluster">
@@ -42,13 +45,13 @@ under the License.
             <max-hops>1</max-hops>
 
             <static-connectors>
-               <connector-ref>node2</connector-ref>
+               <connector-ref>node1</connector-ref>
                <connector-ref>node3</connector-ref>
             </static-connectors>
          </cluster-connection>
       </cluster-connections>
 
-      <name>0.0.0.0</name>
+      <name>node2</name>
 
 
       <persistence-enabled>true</persistence-enabled>
@@ -188,7 +191,7 @@ under the License.
                     "anycastPrefix=jms.queue.;multicastPrefix=jms.topic." to the acceptor url.
                     See https://issues.apache.org/jira/browse/ARTEMIS-1644 for more information. -->
 
-
+         <acceptor name="netty">tcp://0.0.0.0:61616?protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE</acceptor>
          <!-- Acceptor for every supported protocol -->
          <acceptor name="artemis">tcp://0.0.0.0:61616?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;amqpMinLargeMessageSize=102400;protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE;useEpoll=true;amqpCredits=1000;amqpLowCredits=300;amqpDuplicateDetection=true;supportAdvisory=false;suppressInternalManagementObjects=false</acceptor>
 

@@ -33,6 +33,9 @@ under the License.
          <connector name="node3">tcp://192.168.1.143:61616</connector>
       </connectors>
 
+      <cluster-user>clusterUser</cluster-user>
+      <cluster-password>secret123</cluster-password>
+
       <cluster-connections>
          <cluster-connection name="my-cluster">
             <connector-ref>netty</connector-ref>
@@ -48,7 +51,7 @@ under the License.
          </cluster-connection>
       </cluster-connections>
 
-      <name>0.0.0.0</name>
+      <name>node1</name>
 
 
       <persistence-enabled>true</persistence-enabled>
@@ -188,7 +191,7 @@ under the License.
                     "anycastPrefix=jms.queue.;multicastPrefix=jms.topic." to the acceptor url.
                     See https://issues.apache.org/jira/browse/ARTEMIS-1644 for more information. -->
 
-
+         <acceptor name="netty">tcp://0.0.0.0:61616?protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE</acceptor>
          <!-- Acceptor for every supported protocol -->
          <acceptor name="artemis">tcp://0.0.0.0:61616?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;amqpMinLargeMessageSize=102400;protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE;useEpoll=true;amqpCredits=1000;amqpLowCredits=300;amqpDuplicateDetection=true;supportAdvisory=false;suppressInternalManagementObjects=false</acceptor>
 
