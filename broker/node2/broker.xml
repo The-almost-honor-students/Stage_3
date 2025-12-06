@@ -27,7 +27,7 @@ under the License.
          xsi:schemaLocation="urn:activemq:core ">
 
       <connectors>
-         <connector name="netty">tcp://0.0.0.0:61616</connector>
+         <connector name="artemis">tcp://192.168.1.135:61616</connector>
 
          <connector name="node1">tcp://192.168.1.133:61616</connector>
          <connector name="node3">tcp://192.168.1.143:61616</connector>
@@ -38,7 +38,7 @@ under the License.
 
       <cluster-connections>
          <cluster-connection name="my-cluster">
-            <connector-ref>netty</connector-ref>
+            <connector-ref>artemis</connector-ref>
             <retry-interval>500</retry-interval>
             <use-duplicate-detection>true</use-duplicate-detection>
             <message-load-balancing>ON_DEMAND</message-load-balancing>
@@ -191,7 +191,6 @@ under the License.
                     "anycastPrefix=jms.queue.;multicastPrefix=jms.topic." to the acceptor url.
                     See https://issues.apache.org/jira/browse/ARTEMIS-1644 for more information. -->
 
-         <acceptor name="netty">tcp://0.0.0.0:61616?protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE</acceptor>
          <!-- Acceptor for every supported protocol -->
          <acceptor name="artemis">tcp://0.0.0.0:61616?tcpSendBufferSize=1048576;tcpReceiveBufferSize=1048576;amqpMinLargeMessageSize=102400;protocols=CORE,AMQP,STOMP,HORNETQ,MQTT,OPENWIRE;useEpoll=true;amqpCredits=1000;amqpLowCredits=300;amqpDuplicateDetection=true;supportAdvisory=false;suppressInternalManagementObjects=false</acceptor>
 
