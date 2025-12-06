@@ -29,7 +29,7 @@ services:
       - mongo-net
 
   activemq:
-    image: rmohr/activemq:latest
+    image: apache/activemq-artemis:latest
     container_name: activemq
     ports:
       - "61616:61616"
