@@ -1,17 +1,45 @@
 version: "3.8"
 
 services:
+  mongo:
+    image: mongo:latest
+    container_name: mongodb_books
+    environment:
+      - MONGO_INITDB_DATABASE=books
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo_data:/data/db
+    networks:
+      - mongo-net
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo_express
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb_books
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+    ports:
+      - "8085:8085"
+    depends_on:
+      - mongo
+    networks:
+      - mongo-net
+
   activemq:
     image: apache/activemq-artemis:latest
-    container_name: activemq
+    container_name: artemis_broker
+    restart: always
     ports:
-      - "61616:61616"
+      - "61616:61616" 
       - "8161:8161"
     environment:
-      - ACTIVEMQ_STATIC_TOPICS=events
-    networks:
-      - engine-net
-      - mongo-net
+      - ARTEMIS_USER=admin
+      - ARTEMIS_PASSWORD=admin
+    volumes:
+      - ./broker/node1:/var/lib/artemis-instance/etc-override
 
   ingestion:
     image: giselabcr8888/ingestion:multi
