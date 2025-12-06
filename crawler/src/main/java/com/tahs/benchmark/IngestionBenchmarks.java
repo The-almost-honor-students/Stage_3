@@ -34,19 +34,19 @@ import java.util.stream.Stream;
 @State(Scope.Benchmark)
 public class IngestionBenchmarks {
 
-    @Param({"staging/downloads"})
+    @Param({ "staging/downloads" })
     public String stagingDir;
 
-    @Param({"datalake"})
+    @Param({ "datalake" })
     public String datalakeDir;
 
-    @Param({"1-500"})
+    @Param({ "1-500" })
     public String bookIds;
 
-    @Param({"70000"})
+    @Param({ "70000" })
     public int totalBooks;
 
-    @Param({"10"})
+    @Param({ "10" })
     public int maxRetries;
 
     private IngestionService ingestion;
@@ -61,7 +61,18 @@ public class IngestionBenchmarks {
         var appConfig = CheckEnvVars(dotenv);
         rr = new AtomicInteger(0);
         DatalakeRepository repo = new FsDatalakeRepository(datalakeDir);
-        ingestion = new IngestionService(repo, Paths.get(stagingDir), totalBooks, maxRetries, appConfig);
+        // Dummy event publisher for benchmarks to avoid external dependency
+        com.tahs.application.ports.EventPublisher noOpPublisher = new com.tahs.application.ports.EventPublisher() {
+            @Override
+            public void publish(com.tahs.domain.BookEvent event) {
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+
+        ingestion = new IngestionService(repo, noOpPublisher, Paths.get(stagingDir), totalBooks, maxRetries, appConfig);
         candidates = parseIds(bookIds);
         ensureDirs();
         purgeStaging();
@@ -75,7 +86,8 @@ public class IngestionBenchmarks {
         int port = portStr != null ? Integer.parseInt(portStr) : 7070;
         return new AppConfig(
                 urlGutenberg,
-                port
+                port,
+                "vm://localhost?broker.persistent=false" // Dummy broker URL
         );
     }
 
@@ -103,9 +115,14 @@ public class IngestionBenchmarks {
             String[] p = spec.split("-");
             int a = Integer.parseInt(p[0].trim());
             int b = Integer.parseInt(p[1].trim());
-            if (a > b) { int t = a; a = b; b = t; }
+            if (a > b) {
+                int t = a;
+                a = b;
+                b = t;
+            }
             List<Integer> out = new ArrayList<>(b - a + 1);
-            for (int i = a; i <= b; i++) out.add(i);
+            for (int i = a; i <= b; i++)
+                out.add(i);
             return out;
         }
         return Arrays.stream(spec.split(","))
@@ -130,8 +147,14 @@ public class IngestionBenchmarks {
                         String n = p.getFileName().toString();
                         return n.endsWith("_body.txt") || n.endsWith("_header.txt");
                     })
-                    .forEach(p -> { try { Files.deleteIfExists(p); } catch (IOException ignored) {} });
-        } catch (IOException ignored) {}
+                    .forEach(p -> {
+                        try {
+                            Files.deleteIfExists(p);
+                        } catch (IOException ignored) {
+                        }
+                    });
+        } catch (IOException ignored) {
+        }
     }
 
     public static void main(String[] args) throws Exception {
@@ -145,18 +168,18 @@ public class IngestionBenchmarks {
         Path dataDir = base.resolve("data");
         Files.createDirectories(dataDir);
 
-        Path mergedAgg   = dataDir.resolve(BENCH + "_agg.csv");
+        Path mergedAgg = dataDir.resolve(BENCH + "_agg.csv");
         Path mergedIters = dataDir.resolve(BENCH + "_data.csv");
         writeIterCsvHeader(mergedIters);
 
         List<Path> partialAgg = new ArrayList<>();
-        int[] threadSweep = {1, 2, 4, 8};
+        int[] threadSweep = { 1, 2, 4, 8 };
 
         for (int t : threadSweep) {
-            Path aggCsv  = dataDir.resolve(BENCH + "_t" + t + ".csv");
-            Path rawLog  = dataDir.resolve(BENCH + "_t" + t + "_raw.txt");
+            Path aggCsv = dataDir.resolve(BENCH + "_t" + t + ".csv");
+            Path rawLog = dataDir.resolve(BENCH + "_t" + t + "_raw.txt");
             Path iterCsv = dataDir.resolve(BENCH + "_iterations_t" + t + ".csv");
-            Path sysCsv  = dataDir.resolve(BENCH + "_sys_t" + t + ".csv");
+            Path sysCsv = dataDir.resolve(BENCH + "_sys_t" + t + ".csv");
 
             Options opt = new OptionsBuilder()
                     .include(IngestionBenchmarks.class.getSimpleName())
@@ -172,9 +195,10 @@ public class IngestionBenchmarks {
 
             PrintStream originalOut = System.out;
             try (FileOutputStream fos = new FileOutputStream(rawLog.toFile());
-                 PrintStream fileOut = new PrintStream(fos, true, StandardCharsets.UTF_8);
-                 PrintStream dual = new PrintStream(new DualOutputStream(originalOut, fileOut), true, StandardCharsets.UTF_8);
-                 SysSampler sampler = new SysSampler(sysCsv, 200)) {
+                    PrintStream fileOut = new PrintStream(fos, true, StandardCharsets.UTF_8);
+                    PrintStream dual = new PrintStream(new DualOutputStream(originalOut, fileOut), true,
+                            StandardCharsets.UTF_8);
+                    SysSampler sampler = new SysSampler(sysCsv, 200)) {
 
                 System.setOut(dual);
                 System.out.printf("%n=== Running %s benchmark with %d threads ===%n", BENCH, t);
@@ -190,21 +214,30 @@ public class IngestionBenchmarks {
             int written = parseRawToIterationsCsv(rawLog, iterCsv, t);
 
             if (written <= 0) {
-                try { Files.deleteIfExists(iterCsv); } catch (IOException ignored) {}
+                try {
+                    Files.deleteIfExists(iterCsv);
+                } catch (IOException ignored) {
+                }
             } else {
                 appendCsvWithoutHeader(iterCsv, mergedIters);
             }
             if (fileHasMoreThanHeader(aggCsv)) {
                 partialAgg.add(aggCsv);
             } else {
-                try { Files.deleteIfExists(aggCsv); } catch (IOException ignored) {}
+                try {
+                    Files.deleteIfExists(aggCsv);
+                } catch (IOException ignored) {
+                }
             }
         }
 
         mergeCsvWithHeader(partialAgg, mergedAgg);
 
         if (!fileHasMoreThanHeader(mergedIters)) {
-            try { Files.deleteIfExists(mergedIters); } catch (IOException ignored) {}
+            try {
+                Files.deleteIfExists(mergedIters);
+            } catch (IOException ignored) {
+            }
             System.out.println("No iteration data to merge. Removed: " + mergedIters.toAbsolutePath());
         }
 
@@ -215,11 +248,35 @@ public class IngestionBenchmarks {
 
     private static final class DualOutputStream extends OutputStream {
         private final PrintStream a, b;
-        DualOutputStream(PrintStream a, PrintStream b) { this.a = a; this.b = b; }
-        @Override public void write(int i) { a.write(i); b.write(i); }
-        @Override public void write(byte[] buf, int off, int len) { a.write(buf, off, len); b.write(buf, off, len); }
-        @Override public void flush() { a.flush(); b.flush(); }
-        @Override public void close() { a.flush(); b.flush(); }
+
+        DualOutputStream(PrintStream a, PrintStream b) {
+            this.a = a;
+            this.b = b;
+        }
+
+        @Override
+        public void write(int i) {
+            a.write(i);
+            b.write(i);
+        }
+
+        @Override
+        public void write(byte[] buf, int off, int len) {
+            a.write(buf, off, len);
+            b.write(buf, off, len);
+        }
+
+        @Override
+        public void flush() {
+            a.flush();
+            b.flush();
+        }
+
+        @Override
+        public void close() {
+            a.flush();
+            b.flush();
+        }
     }
 
     private static final class SysSampler implements Closeable {
@@ -230,8 +287,8 @@ public class IngestionBenchmarks {
         private final Object lock = new Object();
         private volatile boolean started = false;
 
-        private final com.sun.management.OperatingSystemMXBean osBean =
-                (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+        private final com.sun.management.OperatingSystemMXBean osBean = (com.sun.management.OperatingSystemMXBean) ManagementFactory
+                .getOperatingSystemMXBean();
 
         SysSampler(Path outCsv, long periodMs) throws IOException {
             this.outCsv = outCsv;
@@ -250,7 +307,8 @@ public class IngestionBenchmarks {
 
         void start() {
             synchronized (lock) {
-                if (started) return;
+                if (started)
+                    return;
                 started = true;
                 task = ses.scheduleAtFixedRate(this::sampleOnce, 0, periodMs, TimeUnit.MILLISECONDS);
             }
@@ -258,10 +316,15 @@ public class IngestionBenchmarks {
 
         void stop() {
             synchronized (lock) {
-                if (!started) return;
-                if (task != null) task.cancel(false);
+                if (!started)
+                    return;
+                if (task != null)
+                    task.cancel(false);
                 ses.shutdown();
-                try { ses.awaitTermination(5, TimeUnit.SECONDS); } catch (InterruptedException ignored) {}
+                try {
+                    ses.awaitTermination(5, TimeUnit.SECONDS);
+                } catch (InterruptedException ignored) {
+                }
                 started = false;
             }
         }
@@ -269,20 +332,26 @@ public class IngestionBenchmarks {
         private void sampleOnce() {
             long ts = System.currentTimeMillis();
             double cpuLoad = osBean.getSystemCpuLoad(); // 0.0..1.0 or -1.0 if not available
-            if (cpuLoad < 0) cpuLoad = 0.0;
+            if (cpuLoad < 0)
+                cpuLoad = 0.0;
             double cpuPct = Math.max(0.0, Math.min(100.0, cpuLoad * 100.0));
 
             long total = osBean.getTotalPhysicalMemorySize();
-            long free  = osBean.getFreePhysicalMemorySize();
-            long used  = Math.max(0L, total - free);
+            long free = osBean.getFreePhysicalMemorySize();
+            long used = Math.max(0L, total - free);
             double usedMb = used / (1024.0 * 1024.0);
 
-            try (PrintWriter w = new PrintWriter(Files.newBufferedWriter(outCsv, StandardCharsets.UTF_8, StandardOpenOption.APPEND))) {
+            try (PrintWriter w = new PrintWriter(
+                    Files.newBufferedWriter(outCsv, StandardCharsets.UTF_8, StandardOpenOption.APPEND))) {
                 w.printf(Locale.US, "%d,%.2f,%.2f%n", ts, cpuPct, usedMb);
-            } catch (IOException ignored) {}
+            } catch (IOException ignored) {
+            }
         }
 
-        @Override public void close() { stop(); }
+        @Override
+        public void close() {
+            stop();
+        }
     }
 
     private static void writeIterCsvHeader(Path csv) throws IOException {
@@ -295,7 +364,8 @@ public class IngestionBenchmarks {
 
     private static boolean fileHasMoreThanHeader(Path p) {
         try {
-            if (!Files.exists(p)) return false;
+            if (!Files.exists(p))
+                return false;
             long lines = Files.lines(p).limit(2).count();
             return lines >= 2;
         } catch (IOException e) {
@@ -304,38 +374,53 @@ public class IngestionBenchmarks {
     }
 
     private static void appendCsvWithoutHeader(Path src, Path dst) throws IOException {
-        if (!Files.exists(src)) return;
+        if (!Files.exists(src))
+            return;
         try (BufferedReader br = Files.newBufferedReader(src, StandardCharsets.UTF_8);
-             PrintWriter out = new PrintWriter(Files.newBufferedWriter(dst, StandardCharsets.UTF_8, StandardOpenOption.APPEND))) {
+                PrintWriter out = new PrintWriter(
+                        Files.newBufferedWriter(dst, StandardCharsets.UTF_8, StandardOpenOption.APPEND))) {
             String line;
             boolean first = true;
             while ((line = br.readLine()) != null) {
-                if (first) { first = false; continue; }
-                if (!line.isBlank()) out.println(line);
+                if (first) {
+                    first = false;
+                    continue;
+                }
+                if (!line.isBlank())
+                    out.println(line);
             }
         }
     }
 
     private static int parseRawToIterationsCsv(Path rawLog, Path outCsv, int threads) throws IOException {
-        Pattern warmup = Pattern.compile("^#\\s*Warmup\\s+Iteration\\s+(\\d+)\\s*:\\s*([0-9.,]+)(?:\\s*[±+\\-–—]\\s*[0-9.,]+)?\\s*(\\S.*)$");
-        Pattern meas   = Pattern.compile("^Iteration\\s+(\\d+)\\s*:\\s*([0-9.,]+)(?:\\s*[±+\\-–—]\\s*[0-9.,]+)?\\s*(\\S.*)$");
-        Pattern bench  = Pattern.compile("^#\\s*Benchmark:\\s*(.+)$");
-        Pattern mode   = Pattern.compile("^#\\s*Mode:\\s*(.+)$");
+        Pattern warmup = Pattern.compile(
+                "^#\\s*Warmup\\s+Iteration\\s+(\\d+)\\s*:\\s*([0-9.,]+)(?:\\s*[±+\\-–—]\\s*[0-9.,]+)?\\s*(\\S.*)$");
+        Pattern meas = Pattern
+                .compile("^Iteration\\s+(\\d+)\\s*:\\s*([0-9.,]+)(?:\\s*[±+\\-–—]\\s*[0-9.,]+)?\\s*(\\S.*)$");
+        Pattern bench = Pattern.compile("^#\\s*Benchmark:\\s*(.+)$");
+        Pattern mode = Pattern.compile("^#\\s*Mode:\\s*(.+)$");
 
         String currentBenchmark = "";
         String currentMode = "";
         int written = 0;
 
         try (BufferedReader br = Files.newBufferedReader(rawLog, StandardCharsets.UTF_8);
-             PrintWriter w = new PrintWriter(Files.newBufferedWriter(outCsv, StandardCharsets.UTF_8, StandardOpenOption.APPEND))) {
+                PrintWriter w = new PrintWriter(
+                        Files.newBufferedWriter(outCsv, StandardCharsets.UTF_8, StandardOpenOption.APPEND))) {
 
             String line;
             while ((line = br.readLine()) != null) {
                 Matcher mb = bench.matcher(line);
-                if (mb.find()) { currentBenchmark = mb.group(1).trim(); continue; }
+                if (mb.find()) {
+                    currentBenchmark = mb.group(1).trim();
+                    continue;
+                }
 
                 Matcher mmode = mode.matcher(line);
-                if (mmode.find()) { currentMode = mmode.group(1).trim().toLowerCase(Locale.ROOT); continue; }
+                if (mmode.find()) {
+                    currentMode = mmode.group(1).trim().toLowerCase(Locale.ROOT);
+                    continue;
+                }
 
                 Matcher mw = warmup.matcher(line);
                 if (mw.find()) {
@@ -366,8 +451,10 @@ public class IngestionBenchmarks {
 
     private static String inferMode(String unit, String modeFromHeader) {
         String u = unit.toLowerCase(Locale.ROOT);
-        if (u.contains("ops/s")) return "thrpt";
-        if (u.contains("/op"))  return "avgt";
+        if (u.contains("ops/s"))
+            return "thrpt";
+        if (u.contains("/op"))
+            return "avgt";
         return (modeFromHeader == null || modeFromHeader.isBlank()) ? "unknown" : modeFromHeader;
     }
 
@@ -376,19 +463,26 @@ public class IngestionBenchmarks {
     }
 
     private static void mergeCsvWithHeader(List<Path> inputs, Path output) throws IOException {
-        List<Path> usable = inputs.stream().filter(IngestionBenchmarks::fileHasMoreThanHeader).collect(Collectors.toList());
+        List<Path> usable = inputs.stream().filter(IngestionBenchmarks::fileHasMoreThanHeader)
+                .collect(Collectors.toList());
         if (usable.isEmpty()) {
-            try { Files.deleteIfExists(output); } catch (IOException ignored) {}
+            try {
+                Files.deleteIfExists(output);
+            } catch (IOException ignored) {
+            }
             return;
         }
         List<String> header = Files.readAllLines(usable.get(0), StandardCharsets.UTF_8);
-        if (header.isEmpty()) return;
+        if (header.isEmpty())
+            return;
         List<String> out = new ArrayList<>();
         out.add(header.get(0));
         for (Path in : usable) {
             List<String> lines = Files.readAllLines(in, StandardCharsets.UTF_8);
-            for (int i = 1; i < lines.size(); i++) out.add(lines.get(i));
+            for (int i = 1; i < lines.size(); i++)
+                out.add(lines.get(i));
         }
-        Files.write(output, out, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        Files.write(output, out, StandardCharsets.UTF_8, StandardOpenOption.CREATE,
+                StandardOpenOption.TRUNCATE_EXISTING);
     }
 }

@@ -1,6 +1,7 @@
 package com.tahs.application.usecase;
 
 import com.tahs.application.ports.DatalakeRepository;
+import com.tahs.application.ports.EventPublisher;
 import com.tahs.config.AppConfig;
 
 import java.io.IOException;
@@ -20,6 +21,7 @@ public class IngestionService {
     private static final String END_MARKER = "*** END OF THE PROJECT GUTENBERG EBOOK";
 
     private final DatalakeRepository datalakeRepo;
+    private final EventPublisher eventPublisher;
     private final Path stagingDir;
     private final int totalBooks;
     private final int maxRetries;
@@ -27,11 +29,13 @@ public class IngestionService {
     private final Random rng = new Random();
 
     public IngestionService(DatalakeRepository datalakeRepo,
-                            Path stagingDir,
-                            int totalBooks,
-                            int maxRetries,
-                            AppConfig appConfig) {
+            EventPublisher eventPublisher,
+            Path stagingDir,
+            int totalBooks,
+            int maxRetries,
+            AppConfig appConfig) {
         this.datalakeRepo = datalakeRepo;
+        this.eventPublisher = eventPublisher;
         this.stagingDir = stagingDir.toAbsolutePath().normalize();
         this.totalBooks = totalBooks;
         this.maxRetries = maxRetries;
@@ -41,7 +45,7 @@ public class IngestionService {
     public boolean downloadBookToStaging(int bookId) {
         try {
             Files.createDirectories(stagingDir);
-            String url = String.format("%s/cache/epub/%d/pg%d.txt",appConfig.urlGutenberg(), bookId, bookId);
+            String url = String.format("%s/cache/epub/%d/pg%d.txt", appConfig.urlGutenberg(), bookId, bookId);
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest req = HttpRequest.newBuilder().uri(URI.create(url)).build();
             HttpResponse<String> res = client.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
@@ -77,6 +81,12 @@ public class IngestionService {
     public boolean moveToDatalake(int bookId, LocalDateTime ts) {
         try {
             datalakeRepo.saveBook(bookId, stagingDir, ts);
+            String relativePath = datalakeRepo.relativePathFor(bookId, ts);
+            eventPublisher.publish(new com.tahs.domain.BookEvent(
+                    String.valueOf(bookId),
+                    ts.toString(),
+                    "BOOK_DOWNLOADED",
+                    relativePath));
             return true;
         } catch (IOException e) {
             System.err.println("[ERROR] Failed to move book " + bookId + " to datalake: " + e.getMessage());
@@ -85,15 +95,18 @@ public class IngestionService {
     }
 
     public boolean ingestOne(int bookId, LocalDateTime ts) {
-        if (!downloadBookToStaging(bookId)) return false;
+        if (!downloadBookToStaging(bookId))
+            return false;
         return moveToDatalake(bookId, ts);
     }
 
     public boolean ingestNextRandom(Set<Integer> alreadyDownloaded, LocalDateTime ts) {
         for (int i = 0; i < maxRetries; i++) {
             int candidate = rng.nextInt(totalBooks) + 1;
-            if (alreadyDownloaded.contains(candidate)) continue;
-            if (ingestOne(candidate, ts)) return true;
+            if (alreadyDownloaded.contains(candidate))
+                continue;
+            if (ingestOne(candidate, ts))
+                return true;
         }
         return false;
     }

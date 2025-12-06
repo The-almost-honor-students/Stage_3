@@ -1,6 +1,7 @@
 package com.tahs.config;
 
 public record AppConfig(
-        String urlGutenberg,
-        int port) {
+                String urlGutenberg,
+                int port,
+                String activeMqUrl) {
 }
