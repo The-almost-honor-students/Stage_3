@@ -90,6 +90,17 @@ public class Main {
                         ctx.result(gson.toJson(response));
                 });
 
+                // Start ActiveMQ Consumer
+                try {
+                        var consumer = new com.tahs.infrastructure.messaging.ActiveMQIngestionEventConsumer(
+                                        appConfig.activeMqUrl(),
+                                        "book.events",
+                                        indexService);
+                        consumer.startListening();
+                } catch (Exception e) {
+                        System.err.println("Failed to start ActiveMQ consumer: " + e.getMessage());
+                }
+
                 return app;
         }
 
@@ -106,12 +117,18 @@ public class Main {
                 String portStr = Optional.ofNullable(dotenv.get("PORT"))
                                 .orElse(System.getenv("PORT"));
                 int port = portStr != null ? Integer.parseInt(portStr) : 8080;
+                String activeMqUrl = Optional.ofNullable(dotenv.get("ACTIVEMQ_URL"))
+                                .orElse(System.getenv("ACTIVEMQ_URL"));
+                if (activeMqUrl == null)
+                        activeMqUrl = "tcp://localhost:61616";
                 return new AppConfig(
                                 dbUrl,
                                 databaseName,
                                 collectionMetaData,
+                                collectionMetaData,
                                 collectionIndex,
-                                port);
+                                port,
+                                activeMqUrl);
         }
 
         @NotNull
