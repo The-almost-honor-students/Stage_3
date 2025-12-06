@@ -26,8 +26,8 @@ public class ActiveMQEventPublisher implements EventPublisher {
     private void initialize() {
         try {
             ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
-            factory.setUserName("admin");
-            factory.setPassword("admin");
+            factory.setUserName("clusterUser");
+            factory.setPassword("secret123");
             connection = factory.createConnection();
             connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);

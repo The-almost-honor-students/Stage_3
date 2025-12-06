@@ -123,10 +123,9 @@ public class Main {
                         activeMqUrl = "tcp://localhost:61616";
                 return new AppConfig(
                                 dbUrl,
-                                databaseName,
-                                collectionMetaData,
                                 collectionMetaData,
                                 collectionIndex,
+                                databaseName,
                                 port,
                                 activeMqUrl);
         }

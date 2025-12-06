@@ -13,9 +13,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class IndexingApiAcceptanceTest {
     private static Javalin app;
     @BeforeAll
-    static void setup() {
-        app = createApp().start(8080);
-    }
+//    static void setup() {
+//        app = createApp().start(8080);
+//    }
     @AfterAll
     static void stop() { app.stop(); }
 

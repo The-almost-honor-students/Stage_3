@@ -29,6 +29,8 @@ public class ActiveMQIngestionEventConsumer implements EventConsumer {
     public void startListening() {
         try {
             ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
+            factory.setUserName("clusterUser");
+            factory.setPassword("secret123");
             connection = factory.createConnection();
             connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
