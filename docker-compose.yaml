@@ -84,7 +84,7 @@ services:
       - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
     ports:
       - "9090:9090"
-      - "5701:5701"
+      - "5702:5701"
     depends_on:
       - mongo
       - activemq
