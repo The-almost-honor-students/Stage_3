@@ -143,6 +143,9 @@ This will generate a JAR file inside each module’s `target` directory.
 
 All services are **dockerized** and can be executed independently or together using `docker-compose`.
 
+### Data Persistence
+The MongoDB container is configured to persist data locally in the `mongo_data` directory at the project root. This ensures that your database content survives container restarts.
+
 ### Steps to Run
 
 1. **Set the NODE_IP environment variable** (required for multi-node deployment):
@@ -234,13 +237,15 @@ Each benchmark evaluates throughput, latency, and scalability under different wo
 
 ### Location
 
-The benchmark for the Control service can be found at:
-
-```
-control/src/main/java/com/tahs/benchmark/
-```
+Benchmarks are distributed across the modules:
+- **Control (End-to-End)**: `control/src/main/java/com/tahs/benchmark/`
+- **Ingestion**: `crawler/src/main/java/com/tahs/benchmark/`
+- **Indexing**: `indexer/src/main/java/com/tahs/benchmark/`
+- **Search**: `search/src/main/java/com/tahs/benchmark/`
 
 ### How to Execute
+
+#### 1. End-to-End Benchmark (via Control)
 
 1. Ensure all services are **running via Docker Compose**:
 
