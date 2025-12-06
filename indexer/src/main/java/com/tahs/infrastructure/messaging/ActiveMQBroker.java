@@ -1,4 +1,4 @@
-package com.tahs.infrastructure.persistence;
+package com.tahs.infrastructure.messaging;
 
 import com.tahs.application.ports.MessageBroker;
 import com.tahs.config.ActiveMQClusterConfig;

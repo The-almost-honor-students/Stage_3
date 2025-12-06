@@ -8,6 +8,8 @@ import com.mongodb.client.MongoClients;
 import com.tahs.application.exceptions.BookNotFound;
 import com.tahs.application.usecase.IndexService;
 import com.tahs.config.AppConfig;
+import com.tahs.infrastructure.cache.hazelcast.CachedInvertedIndexRepository;
+import com.tahs.infrastructure.cache.hazelcast.CachedMetadataRepository;
 import com.tahs.infrastructure.persistence.MongoInvertedIndexRepository;
 import com.tahs.infrastructure.persistence.MongoMetadataRepository;
 import com.tahs.infrastructure.serialization.books.GutenbergHeaderSerializer;
@@ -125,12 +127,12 @@ public class Main {
 
                 var indexRepository = new MongoInvertedIndexRepository(mongoClient, appConfig.databaseName(),
                                 appConfig.collectionIndexName());
-                var cachedIndexRepository = new com.tahs.infrastructure.persistence.CachedInvertedIndexRepository(
+                var cachedIndexRepository = new CachedInvertedIndexRepository(
                                 indexRepository, hazelcastInstance);
 
                 var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(),
                                 appConfig.collectionMetadataName());
-                var cachedMetadataRepository = new com.tahs.infrastructure.persistence.CachedMetadataRepository(
+                var cachedMetadataRepository = new CachedMetadataRepository(
                                 metadataRepository, hazelcastInstance);
 
                 var gutenbergHeaderSerializer = new GutenbergHeaderSerializer();

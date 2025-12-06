@@ -1,4 +1,4 @@
-package com.tahs.infrastructure.persistence;
+package com.tahs.infrastructure.cache.hazelcast;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.tahs.application.ports.MetadataRepository;

@@ -1,10 +1,9 @@
-package com.tahs.infrastructure.persistence;
+package com.tahs.infrastructure.cache.hazelcast;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.map.IMap;
 import com.tahs.application.ports.InvertedIndexRepository;
 import com.tahs.domain.IndexStats;
-import com.tahs.infrastructure.persistence.hazelcast.AddBookEntryProcessor;
 
 import java.util.Set;
 

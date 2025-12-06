@@ -1,4 +1,4 @@
-package com.tahs.infrastructure.persistence.hazelcast;
+package com.tahs.infrastructure.cache.hazelcast;
 
 import com.hazelcast.map.EntryProcessor;
 
