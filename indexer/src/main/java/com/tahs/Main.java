@@ -94,6 +94,8 @@ public class Main {
                         var consumer = new com.tahs.infrastructure.messaging.ActiveMQIngestionEventConsumer(
                                         appConfig.activeMqUrl(),
                                         "book.events",
+                                        appConfig.activeMqUsername(),
+                                        appConfig.activeMqPassword(),
                                         indexService);
                         consumer.startListening();
                 } catch (Exception e) {
@@ -120,13 +122,19 @@ public class Main {
                                 .orElse(System.getenv("ACTIVEMQ_URL"));
                 if (activeMqUrl == null)
                         activeMqUrl = "tcp://localhost:61616";
+                String activeMqUsername = Optional.ofNullable(dotenv.get("ACTIVEMQ_USERNAME"))
+                                .orElse(System.getenv("ACTIVEMQ_USERNAME"));
+                String activeMqPassword = Optional.ofNullable(dotenv.get("ACTIVEMQ_PASSWORD"))
+                                .orElse(System.getenv("ACTIVEMQ_PASSWORD"));
                 return new AppConfig(
                                 dbUrl,
                                 collectionMetaData,
                                 collectionIndex,
                                 databaseName,
                                 port,
-                                activeMqUrl);
+                                activeMqUrl,
+                                activeMqUsername,
+                                activeMqPassword);
         }
 
         @NotNull

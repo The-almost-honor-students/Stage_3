@@ -17,21 +17,34 @@ public class ActiveMQIngestionEventConsumer implements EventConsumer {
     private Connection connection;
     private Session session;
     private MessageConsumer consumer;
+    private final String username;
+    private final String password;
 
-    public ActiveMQIngestionEventConsumer(String brokerUrl, String queueName, IndexService indexService) {
+    public ActiveMQIngestionEventConsumer(String brokerUrl,
+            String queueName,
+            String username,
+            String password,
+            IndexService indexService) {
         this.brokerUrl = brokerUrl;
         this.queueName = queueName;
         this.indexService = indexService;
         this.gson = new Gson();
+        this.username = username;
+        this.password = password;
     }
 
     @Override
     public void startListening() {
         try {
             ActiveMQConnectionFactory factory = new ActiveMQConnectionFactory(brokerUrl);
-            factory.setUserName("clusterUser");
-            factory.setPassword("secret123");
-            connection = factory.createConnection();
+            if (username != null && password != null) {
+                factory.setUserName(username);
+                factory.setPassword(password);
+                connection = factory.createConnection(username, password);
+            } else {
+                connection = factory.createConnection();
+            }
+
             connection.start();
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Queue destination = session.createQueue(queueName);
