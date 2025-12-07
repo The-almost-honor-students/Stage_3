@@ -111,17 +111,11 @@
     \vspace*{1cm}
 \end{titlepage}
 
-% ================== ABSTRACT & KEYWORDS ==================
-\section*{Abstract}
-
-This project represents the third stage of the Project Gutenberg Book Search Engine.  
-It focuses on building a scalable cluster-oriented design using Docker, Kubernetes, and distributed microservices. A key highlight is the implementation of a highly available ActiveMQ Artemis cluster for robust message handling.
 
 \section*{Keywords}
 
 Docker, Kubernetes, Cluster, Microservices, ActiveMQ Artemis, High Availability, kind.
 
-\newpage
 \tableofcontents
 \newpage
 
