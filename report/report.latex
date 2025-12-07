@@ -131,10 +131,13 @@ In this stage, the focus has shifted towards creating a robust, distributed arch
 A core component of our architecture is the message broker. We have migrated to using \textbf{ActiveMQ Artemis} configured as a high-availability cluster.
 
 \subsection{ActiveMQ Artemis Cluster}
-We have deployed a 3-node ActiveMQ Artemis cluster. The nodes (`node1`, `node2`, `node3`) work together to form a distributed messaging fabric. This setup provides several key advantages:
+We have deployed a 3-node ActiveMQ Artemis cluster. The nodes (`node1`, `node2`, `node3`) work together to form a distributed messaging fabric. \textbf{ActiveMQ Artemis} was chosen for its high performance and advanced features, as detailed in the official documentation [3].  
+This setup provides several key advantages:
 
 \begin{enumerate}
     \item \textbf{High Efficiency and Load Distribution}: By redistributing messages across the cluster, we ensure that no single broker is a bottleneck. Consumers can connect to any node in the cluster, and messages are efficiently routed to where they are needed. This redistribution mechanism optimizes the consumption of messages by the worker machines (Ingestion and Indexing services).
+    
+    \item \textbf{Redistribution Configuration}: The key mechanism enabling this distributed behavior is the \texttt{redistribution-delay} setting within the \texttt{broker.xml} configuration files. By setting this parameter to \texttt{0} inside the \texttt{<address-settings>} block, we ensure that messages are immediately redistributed to other nodes if there are no local consumers available, maximizing throughput and minimizing latency.
     
     \item \textbf{High Availability and Fault Tolerance}: The cluster architecture avoids a \textit{Single Point of Failure (SPOF)}. If one machine or broker node goes down, the other nodes continue to operate, ensuring the workflow is not interrupted. The system is highly distributed, meaning the failure of a single component does not stop the entire data processing pipeline.
 \end{enumerate}
@@ -351,6 +354,7 @@ docker buildx build \
 \begin{enumerate}
     \item Kubernetes SIGs. \textit{Kind: Kubernetes IN Docker}. Available at: \url{https://kind.sigs.k8s.io/}
     \item The Kubernetes Authors. \textit{Kubernetes Architecture Documentation}. Available at: \url{https://kubernetes.io/docs/concepts/architecture/}
+    \item Apache Software Foundation. \textit{ActiveMQ Artemis Documentation}. Available at: \url{https://activemq.apache.org/components/artemis/documentation/latest/index.html}
 \end{enumerate}
 
 \end{document}
