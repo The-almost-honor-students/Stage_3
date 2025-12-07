@@ -126,11 +126,13 @@ Docker, Kubernetes, Cluster, Microservices, ActiveMQ Artemis, High Availability,
 
 In this stage, the focus has shifted towards creating a robust, distributed architecture capable of handling large-scale data processing for a search engine. We maintain the core microservices (Ingestion, Indexing, Search) but deploy them in a clustered environment ensuring scalability and fault tolerance.
 
-\section{System Architecture: Distributed Messaging with ActiveMQ Artemis}
+\section{System Architecture}
+
+This project implements a distributed architecture designed for scalability and fault tolerance.
+
+\subsection{Distributed Messaging: ActiveMQ Artemis}
 
 A core component of our architecture is the message broker. We have migrated to using \textbf{ActiveMQ Artemis} configured as a high-availability cluster.
-
-\subsection{ActiveMQ Artemis Cluster}
 We have deployed a 3-node ActiveMQ Artemis cluster. The nodes (`node1`, `node2`, `node3`) work together to form a distributed messaging fabric. \textbf{ActiveMQ Artemis} was chosen for its high performance and advanced features, as detailed in the official documentation [3].  
 This setup provides several key advantages:
 
@@ -143,6 +145,16 @@ This setup provides several key advantages:
 \end{enumerate}
 
 The services connect to the broker using a failover transport string, enabling them to automatically reconnect to available nodes in case of network issues or node failure.
+
+\subsection{Data Management: Hazelcast and MongoDB}
+
+To optimize performance without sacrificing data integrity, we implemented a hybrid data strategy:
+
+\begin{itemize}
+    \item \textbf{Hazelcast (Distributed Caching)}: We utilize \textbf{Hazelcast} as an in-memory data grid. It acts as a distributed cache to store inverted index fragments during the heavy indexing process. This allows for extremely fast read/write operations (low latency) that are essential for the performance of the search engine.
+    
+    \item \textbf{MongoDB (Persistence Layer)}: It is important to note that Hazelcast \textbf{does not replace} MongoDB. \textbf{MongoDB} remains the authoritative source of truth, providing persistent storage for the book references and metadata. While Hazelcast offers speed for active processing, MongoDB ensures that data is durably stored and preserved across system restarts or failures.
+\end{itemize}
 
 \section{Microservices Architecture}
 
