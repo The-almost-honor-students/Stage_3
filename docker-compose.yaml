@@ -101,12 +101,11 @@ services:
   syncthing:
     image: linuxserver/syncthing:2.0.12
     container_name: syncthing
-    hostname: node1
-    network_mode: host
+    hostname: node2
     environment:
       - PUID=0
       - PGID=0
-      - TZ=Atlantic/Canary # Adjusted to your likely timezone (WET/CET)
+      - TZ=Atlantic/Canary
     volumes:
       - ./syncthing_config:/config
       - engine-volume:/app/datalake
