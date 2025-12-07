@@ -1,4 +1,4 @@
-package com.tahs.test;
+package com.tahs.infrastructure.hazelcast;
 
 import com.hazelcast.client.HazelcastClient;
 import com.hazelcast.client.config.ClientConfig;

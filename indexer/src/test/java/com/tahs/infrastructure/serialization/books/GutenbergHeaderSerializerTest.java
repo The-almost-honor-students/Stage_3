@@ -1,7 +1,6 @@
 package com.tahs.infrastructure.serialization.books;
 
 import com.tahs.domain.Book;
-import com.tahs.infrastructure.serialization.books.GutenbergHeaderSerializer;
 import org.junit.jupiter.api.*;
 
 import java.io.IOException;
