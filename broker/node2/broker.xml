@@ -37,7 +37,7 @@ under the License.
 
       <cluster-connections>
          <cluster-connection name="my-cluster">
-            <connector-ref>node2</connector-ref> ...
+            <connector-ref>node2</connector-ref>
             <static-connectors>
                <connector-ref>node1</connector-ref>
                <connector-ref>node3</connector-ref>
