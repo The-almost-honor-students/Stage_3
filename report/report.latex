@@ -365,6 +365,33 @@ docker buildx build \
     \item Provides a single, validated, publicly available image source for deployment.
 \end{itemize}
 
+\section{Testing and Verification}
+
+To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented. This includes unit tests, acceptance tests, and performance benchmarks.
+
+\subsection{Unit Testing}
+Unit tests were essential for verifying the core logic of individual components in isolation.
+\begin{itemize}
+    \item \textbf{TextTokenizerTest}: Verifies that the book content is correctly split into tokens (terms) for indexing. This is critical for the accuracy of the search engine.
+    \item \textbf{GutenbergHeaderSerializerTest}: Ensures that metadata (title, author, language) is correctly extracted from the raw Project Gutenberg files.
+\end{itemize}
+
+\subsection{Integration and Acceptance Testing}
+To guarantee that the microservices interact correctly, acceptance tests were employed.
+\begin{itemize}
+    \item \textbf{IndexingApiAcceptanceTest}: Validates the end-to-end functionality of the indexing service, ensuring that books sent to the API are correctly processed and stored.
+\end{itemize}
+
+\subsection{Performance Benchmarking}
+Given the "Big Data" nature of the project, performance verification was paramount. We used the \textbf{JMH (Java Microbenchmark Harness)} framework to rigorously test the system's throughput and latency.
+\begin{itemize}
+    \item \textbf{IngestionBenchmarks}: Measured the throughput of the ingestion process, ensuring the system can handle high volumes of book data.
+    \item \textbf{SearchBenchmarks}: Tested the search latency under load, simulating concurrent user queries to verify the responsiveness of the cache and database.
+\end{itemize}
+
+\subsection{Manual Verification}
+In addition to automated tests, scripts such as \texttt{verify\_hazelcast.sh} were created to manually verify the connectivity and operation of the distributed components (e.g., the Hazelcast cache) within the Docker container environment.
+
 \section{References}
 
 \begin{enumerate}
