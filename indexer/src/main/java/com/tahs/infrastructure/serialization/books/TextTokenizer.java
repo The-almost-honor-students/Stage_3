@@ -8,35 +8,38 @@ import java.util.regex.Pattern;
 public final class TextTokenizer {
     private static final Pattern WORD = Pattern.compile("\\p{L}+(?:[’']\\p{L}+)*");
 
-    private static final Set<String> STOP_WORDS = Set.of(
-            "a", "about", "above", "after", "again", "against", "all", "am",
-            "an", "and", "any", "are", "aren't", "as", "at", "be", "because",
-            "been", "before", "being", "below", "between", "both", "but", "by",
-            "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does",
-            "doesn't", "doing", "don't", "down", "during", "each", "few", "for",
-            "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't",
-            "having", "he", "he'd", "he'll", "he's", "her", "here", "here's",
-            "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd",
-            "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's",
-            "its", "itself", "let's", "me", "more", "most", "mustn't", "my",
-            "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or",
-            "other", "ought", "our", "ours", "ourselves", "out", "over", "own",
-            "same", "shan't", "she", "she'd", "she'll", "she's", "should",
-            "shouldn't", "so", "some", "such", "than", "that", "that's", "the",
-            "their", "theirs", "them", "themselves", "then", "there", "there's",
-            "these", "they", "they'd", "they'll", "they're", "they've", "this",
-            "those", "through", "to", "too", "under", "until", "up", "very", "was",
-            "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't",
-            "what", "what's", "when", "when's", "where", "where's", "which", "while",
-            "who", "who's", "whom", "why", "why's", "with", "won't", "would",
-            "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your",
-            "yours", "yourself", "yourselves"
-    );
+    private static final Set<String> STOP_WORDS = new HashSet<>();
 
-    private TextTokenizer() {}
+    static {
+        loadStopWords();
+    }
+
+    private static void loadStopWords() {
+        try (java.io.InputStream inputStream = TextTokenizer.class.getClassLoader()
+                .getResourceAsStream("stopwords.csv")) {
+            if (inputStream == null) {
+                throw new RuntimeException("stopwords.csv not found in resources");
+            }
+            try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                    new java.io.InputStreamReader(inputStream, java.nio.charset.StandardCharsets.UTF_8))) {
+                String content = reader.lines().collect(java.util.stream.Collectors.joining("\n"));
+                for (String word : content.split(",")) {
+                    if (!word.isBlank()) {
+                        STOP_WORDS.add(word.trim());
+                    }
+                }
+            }
+        } catch (java.io.IOException e) {
+            throw new RuntimeException("Failed to load stop words", e);
+        }
+    }
+
+    private TextTokenizer() {
+    }
 
     public static Set<String> extractTerms(String text) {
-        if (text == null || text.isBlank()) return Collections.emptySet();
+        if (text == null || text.isBlank())
+            return Collections.emptySet();
 
         String cleaned = normalize(text);
         Matcher m = WORD.matcher(cleaned);
@@ -62,7 +65,7 @@ public final class TextTokenizer {
                 .replace('\u201B', '\'') // ‛
                 .replace('\u2032', '\'') // ′
                 .replace('\u00B4', '\'') // ´
-                .replace('\u201C', '"')  // “
+                .replace('\u201C', '"') // “
                 .replace('\u201D', '"'); // ”
         String nfd = Normalizer.normalize(unified, Normalizer.Form.NFD);
         String noMarks = nfd.replaceAll("\\p{M}", "");
