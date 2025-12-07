@@ -33,6 +33,9 @@ under the License.
          <connector name="node1">tcp://192.168.1.133:61616</connector>
          <connector name="node2">tcp://192.168.1.135:61616</connector>
          <connector name="node3">tcp://192.168.1.143:61616</connector>
+         <!-- <connector name="node1">tcp://10.26.14.221:61616</connector>
+         <connector name="node2">tcp://10.26.14.222:61616</connector>
+         <connector name="node3">tcp://10.26.14.223:61616</connector> -->
       </connectors>
 
       <cluster-connections>
