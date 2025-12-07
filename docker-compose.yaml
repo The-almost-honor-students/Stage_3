@@ -108,7 +108,7 @@ services:
       - TZ=Atlantic/Canary
     volumes:
       - ./syncthing_config:/config
-      - engine-volume:/app/datalake
+      - engine-volume:/app
     ports:
       - "8384:8384"
       - "22000:22000/tcp"
