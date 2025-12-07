@@ -383,9 +383,6 @@ Given the "Big Data" nature of the project, performance verification was paramou
     \item \textbf{SearchBenchmarks}: Tested the search latency under load, simulating concurrent user queries to verify the responsiveness of the cache and database.
 \end{itemize}
 
-\subsection{Manual Verification}
-In addition to automated tests, scripts such as \texttt{verify\_hazelcast.sh} were created to manually verify the connectivity and operation of the distributed components (e.g., the Hazelcast cache) within the Docker container environment.
-
 \section{References}
 
 \begin{enumerate}
