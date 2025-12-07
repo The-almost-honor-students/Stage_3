@@ -102,18 +102,20 @@ services:
     image: linuxserver/syncthing:2.0.12
     container_name: syncthing
     hostname: node2
+    #    network_mode: host
     environment:
       - PUID=0
       - PGID=0
       - TZ=Atlantic/Canary
+      - STGUIAPIKEY=mysecretapikey
     volumes:
       - ./syncthing_config:/config
       - engine-volume:/app
     ports:
-      - "8384:8384"
-      - "22000:22000/tcp"
-      - "22000:22000/udp"
-      - "21027:21027/udp"
+      - "8384:8384"       # Web UI
+      - "22000:22000/tcp" # Sync Traffic
+      - "22000:22000/udp" # Sync Traffic
+      - "21027:21027/udp" # Local Discovery
     restart: unless-stopped
 
 networks:
