@@ -60,13 +60,13 @@ public final class TextTokenizer {
 
     private static String normalize(String s) {
         String unified = s
-                .replace('\u2019', '\'') // ’
-                .replace('\u2018', '\'') // ‘
-                .replace('\u201B', '\'') // ‛
-                .replace('\u2032', '\'') // ′
-                .replace('\u00B4', '\'') // ´
-                .replace('\u201C', '"') // “
-                .replace('\u201D', '"'); // ”
+                .replace('\u2019', '\'')
+                .replace('\u2018', '\'')
+                .replace('\u201B', '\'')
+                .replace('\u2032', '\'')
+                .replace('\u00B4', '\'')
+                .replace('\u201C', '"')
+                .replace('\u201D', '"');
         String nfd = Normalizer.normalize(unified, Normalizer.Form.NFD);
         String noMarks = nfd.replaceAll("\\p{M}", "");
         return noMarks.toLowerCase(Locale.ROOT);
