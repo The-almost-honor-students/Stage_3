@@ -63,6 +63,15 @@ public class Main {
                 int bookId = Integer.parseInt(ctx.pathParam("book_id"));
                 System.out.println("[API] Received ingestion request for book " + bookId);
 
+                if (ingestionService.existsInDatalake(bookId)) {
+                        System.out.println("[API] Book " + bookId + " already exists in datalake. Skipping download.");
+                        ctx.json(Map.of(
+                                        "book_id", bookId,
+                                        "status", "already_exists",
+                                        "message", "Book already in datalake"));
+                        return;
+                }
+
                 boolean ok = ingestionService.downloadBookToStaging(bookId);
                 if (!ok) {
                         ctx.status(400).json(Map.of(

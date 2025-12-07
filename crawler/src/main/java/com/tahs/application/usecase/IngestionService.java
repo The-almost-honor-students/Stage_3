@@ -95,6 +95,10 @@ public class IngestionService {
     }
 
     public boolean ingestOne(int bookId, LocalDateTime ts) {
+        if (existsInDatalake(bookId)) {
+            System.out.println("[INFO] Book " + bookId + " already exists in datalake. Skipping.");
+            return true;
+        }
         if (!downloadBookToStaging(bookId))
             return false;
         return moveToDatalake(bookId, ts);
