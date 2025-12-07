@@ -121,6 +121,10 @@ It focuses on building a scalable cluster-oriented design using Docker, Kubernet
 
 Docker, Kubernetes, Cluster, Microservices, ActiveMQ Artemis, High Availability, kind.
 
+\newpage
+\tableofcontents
+\newpage
+
 % ================== SECTIONS ==================
 \section{Introduction}
 
