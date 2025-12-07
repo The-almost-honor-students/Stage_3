@@ -159,7 +159,7 @@ To optimize performance without sacrificing data integrity, we implemented a hyb
 The system relies on three main microservices, all containerized and orchestrated:
 
 \begin{itemize}
-    \item \textbf{Ingestion Service}: Responsible for downloading books from Project Gutenberg. It communicates with the broker to receive commands and publishes status updates.
+    \item \textbf{Ingestion Service}: Responsible for downloading books from Project Gutenberg. It communicates with the broker to receive commands and publishes status updates. Additionally, it implements a deduplication mechanism to avoid re-downloading and re-indexing books that are already present in the datalake. This implementation was straightforward, relying on a simple check for file existence before initiating a download. Despite its simplicity, the benefits are significant: it prevents redundant network usage and saves processing power (CPU) by ensuring that only new, unprocessed content is handled by the system.
     \item \textbf{Indexing Service}: Consumes book data and builds an inverted index. It uses a distributed map (Hazelcast) to store terms and occurrences effectively across the cluster.
     \item \textbf{Search Service}: Provides the user interface and API for querying the indexed books.
 \end{itemize}
