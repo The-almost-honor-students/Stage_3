@@ -20,10 +20,8 @@ public class CachedInvertedIndexRepository implements InvertedIndexRepository {
 
     @Override
     public boolean indexBook(String book_id, Set<String> terms) {
-        // First, persist to MongoDB
         boolean result = repository.indexBook(book_id, terms);
 
-        // Then, update Hazelcast cache using EntryProcessor for atomic operations
         for (String term : terms) {
             invertedIndexCache.executeOnKey(term, new AddBookEntryProcessor(book_id));
         }
@@ -34,7 +32,6 @@ public class CachedInvertedIndexRepository implements InvertedIndexRepository {
     @Override
     public void deleteAll() {
         repository.deleteAll();
-        // Clear the Hazelcast cache as well
         invertedIndexCache.clear();
     }
 

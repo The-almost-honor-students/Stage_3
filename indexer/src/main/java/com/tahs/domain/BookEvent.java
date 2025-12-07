@@ -4,11 +4,6 @@ import java.io.Serializable;
 import java.time.Instant;
 import java.util.Objects;
 
-/**
- * Represents an event related to a book in the system.
- * This event can be published to a message broker for processing by other
- * services.
- */
 public class BookEvent implements Serializable {
     private static final long serialVersionUID = 1L;
 

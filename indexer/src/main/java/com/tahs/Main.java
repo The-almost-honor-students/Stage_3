@@ -90,7 +90,6 @@ public class Main {
                         ctx.result(gson.toJson(response));
                 });
 
-                // Start ActiveMQ Consumer
                 try {
                         var consumer = new com.tahs.infrastructure.messaging.ActiveMQIngestionEventConsumer(
                                         appConfig.activeMqUrl(),

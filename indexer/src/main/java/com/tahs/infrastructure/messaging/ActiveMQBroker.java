@@ -16,7 +16,6 @@ public class ActiveMQBroker implements MessageBroker {
     private MessageProducer producer;
 
     public ActiveMQBroker(String queueName) throws JMSException {
-        // Use the cluster failover URL by default
         this.brokerUrl = ActiveMQClusterConfig.getFailoverUrl();
         this.queueName = queueName;
         initialize();

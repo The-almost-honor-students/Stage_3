@@ -33,12 +33,11 @@ public class MongoInvertedIndexRepository implements InvertedIndexRepository {
 
     @Override
     public boolean indexBook(String bookId, Set<String> terms) {
-        for( String term : terms){
+        for (String term : terms) {
             var filter = eq("term", term);
             var update = Updates.combine(
                     Updates.setOnInsert("term", term),
-                    Updates.addToSet("postings", bookId)
-            );
+                    Updates.addToSet("postings", bookId));
             collection.updateOne(filter, update, new UpdateOptions().upsert(true));
         }
         return false;
@@ -63,6 +62,7 @@ public class MongoInvertedIndexRepository implements InvertedIndexRepository {
         return new IndexStats(sizeMB, lastUpdate);
 
     }
+
     private static double toDouble(Object number) {
         return number instanceof Number ? ((Number) number).doubleValue() : 0.0;
     }
@@ -74,8 +74,8 @@ public class MongoInvertedIndexRepository implements InvertedIndexRepository {
     private static Instant getLastUpdateFromUpdatedAt(MongoCollection<Document> coll) {
         try (MongoCursor<Document> cursor = coll.aggregate(Arrays.asList(
                 new Document("$group", new Document("_id", null)
-                        .append("last", new Document("$max", "$updated_at")))
-        )).iterator()) {
+                        .append("last", new Document("$max", "$updated_at")))))
+                .iterator()) {
             if (cursor.hasNext()) {
                 Date d = cursor.next().getDate("last");
                 return d != null ? d.toInstant() : null;
@@ -97,6 +97,5 @@ public class MongoInvertedIndexRepository implements InvertedIndexRepository {
         }
         return null;
     }
-
 
 }
