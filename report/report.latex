@@ -1,0 +1,356 @@
+\documentclass[12pt,a4paper]{article}
+
+% ================== Packages ==================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,english]{babel}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{tabularx}
+\usepackage{makecell}
+\usepackage{placeins}
+\usepackage{multirow}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{siunitx}
+\usepackage{subcaption}
+\usepackage{setspace}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{microtype}
+\usepackage[edges]{forest}
+\usepackage[colorlinks=false, pdfborder={0 0 0}]{hyperref}
+
+\hypersetup{
+  linktoc=all,
+  hidelinks
+}
+
+% ================== Configuración general ==================
+\geometry{margin=2.5cm}
+\setstretch{1.15}
+\renewcommand\theadfont{\normalsize\bfseries}
+
+% Encabezados / pies
+\fancyhf{}
+\fancyhead[L]{Stage 3 -- Big Data}
+\fancyhead[R]{The Almost Honor Students}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\pagestyle{fancy}
+
+% Estilo de secciones
+\titleformat{\section}{\bfseries\Large}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\bfseries\large}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\bfseries\normalsize}{\thesubsubsection}{0.5em}{}
+
+% ================== Listings (código) ==================
+\definecolor{codebg}{RGB}{247,247,247}
+\lstdefinestyle{code}{
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\small,
+  keywordstyle=\bfseries,
+  commentstyle=\itshape\color{gray},
+  stringstyle=\color{black},
+  showstringspaces=false,
+  frame=single,
+  framerule=0.3pt,
+  breaklines=true,
+  tabsize=2
+}
+\lstset{style=code}
+
+\begin{document}
+
+% ================== PORTADA ==================
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+
+    {\LARGE \textbf{Stage 3: Building a Cluster Architecture}\par}
+    \vspace{0.6cm}
+
+    {\large \textit{Search Engine Project}\par}
+    \vspace{0.4cm}
+
+    {\large \textbf{Big Data -- Stage 3 (2025)}\par}
+    \vspace{2.2cm}
+
+    {\large \textbf{Bachelor’s Degree in Data Science and Engineering}\par}
+    \vspace{0.3cm}
+
+    {\large \textbf{University of Las Palmas de Gran Canaria}\par}
+    \vspace{2.0cm}
+
+    {\large \textbf{Academic Year:} Third Year, First Semester\par}
+    \vspace{0.8cm}
+
+    {\large \textbf{Team:} \textit{The Almost Honor Students}\par}
+    \vspace{0.7cm}
+
+    \begin{center}
+        {\large
+        Gisela Belmonte Cruz\\[0.2cm]
+        Nerea Valido Calzada\\[0.2cm]
+        Kaarlo Caballero Nillukka\\[0.2cm]
+        Ancor González Hernández\\[0.2cm]
+        }
+    \end{center}
+
+    \vfill
+
+    {\large \textbf{GitHub Repository:}\par}
+    \vspace{0.2cm}
+    {\large \url{https://github.com/The-almost-honor-students/Stage_3}\par}
+
+    \vspace*{1cm}
+\end{titlepage}
+
+% ================== ABSTRACT & KEYWORDS ==================
+\section*{Abstract}
+
+This project represents the third stage of the Project Gutenberg Book Search Engine.  
+It focuses on building a scalable cluster-oriented design using Docker, Kubernetes, and distributed microservices. A key highlight is the implementation of a highly available ActiveMQ Artemis cluster for robust message handling.
+
+\section*{Keywords}
+
+Docker, Kubernetes, Cluster, Microservices, ActiveMQ Artemis, High Availability, kind.
+
+% ================== SECTIONS ==================
+\section{Introduction}
+
+In this stage, the focus has shifted towards creating a robust, distributed architecture capable of handling large-scale data processing for a search engine. We maintain the core microservices (Ingestion, Indexing, Search) but deploy them in a clustered environment ensuring scalability and fault tolerance.
+
+\section{System Architecture: Distributed Messaging with ActiveMQ Artemis}
+
+A core component of our architecture is the message broker. We have migrated to using \textbf{ActiveMQ Artemis} configured as a high-availability cluster.
+
+\subsection{ActiveMQ Artemis Cluster}
+We have deployed a 3-node ActiveMQ Artemis cluster. The nodes (`node1`, `node2`, `node3`) work together to form a distributed messaging fabric. This setup provides several key advantages:
+
+\begin{enumerate}
+    \item \textbf{High Efficiency and Load Distribution}: By redistributing messages across the cluster, we ensure that no single broker is a bottleneck. Consumers can connect to any node in the cluster, and messages are efficiently routed to where they are needed. This redistribution mechanism optimizes the consumption of messages by the worker machines (Ingestion and Indexing services).
+    
+    \item \textbf{High Availability and Fault Tolerance}: The cluster architecture avoids a \textit{Single Point of Failure (SPOF)}. If one machine or broker node goes down, the other nodes continue to operate, ensuring the workflow is not interrupted. The system is highly distributed, meaning the failure of a single component does not stop the entire data processing pipeline.
+\end{enumerate}
+
+The services connect to the broker using a failover transport string, enabling them to automatically reconnect to available nodes in case of network issues or node failure.
+
+\section{Microservices Architecture}
+
+The system relies on three main microservices, all containerized and orchestrated:
+
+\begin{itemize}
+    \item \textbf{Ingestion Service}: Responsible for downloading books from Project Gutenberg. It communicates with the broker to receive commands and publishes status updates.
+    \item \textbf{Indexing Service}: Consumes book data and builds an inverted index. It uses a distributed map (Hazelcast) to store terms and occurrences effectively across the cluster.
+    \item \textbf{Search Service}: Provides the user interface and API for querying the indexed books.
+\end{itemize}
+
+\section{Background and Investigation Work}
+
+\subsection{Kubernetes: Local Cluster Deployment with kind}
+
+As part of the investigation, Kubernetes was studied using the official kind documentation [1], and the internal architecture of Kubernetes was analyzed through the official project documentation [2].  
+A significant effort was dedicated to understanding and configuring Kubernetes using \texttt{kind} (Kubernetes IN Docker) [1]. Although Kubernetes was not required for the final deployment of the microservices, it was intentionally explored due to its relevance in large-scale distributed architectures.
+
+This research complements the main system development by offering insights into how the ingestion, indexing, and search services could operate inside a realistic distributed environment. Kubernetes provides features such as declarative deployments, load balancing, automatic recovery, and namespace isolation.
+
+\subsubsection*{Overview and Motivation}
+
+Docker provides lightweight containers, but Kubernetes extends these capabilities to full orchestration. Benefits include:
+
+\begin{itemize}
+    \item Automated Pod recovery.
+    \item Declarative configuration with YAML.
+    \item Load balancing with Services.
+    \item Autoscaling capabilities.
+    \item Namespaces for isolation.
+    \item Multi-node cluster simulation with \texttt{kind}.
+\end{itemize}
+
+\subsubsection*{Project Structure and Manifests}
+
+The Kubernetes configuration used during the investigation was organized in \texttt{cluster/manifests}, divided per microservice:
+
+\begin{itemize}
+    \item \texttt{indexing/}
+    \item \texttt{ingestion/}
+    \item \texttt{search/}
+\end{itemize}
+
+Each included:
+
+\begin{itemize}
+    \item Namespace  
+    \item Deployment  
+    \item Service
+\end{itemize}
+
+\subsubsection*{Namespaces}
+
+\begin{lstlisting}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: indexing
+\end{lstlisting}
+
+\subsubsection*{Deployments}
+
+\begin{lstlisting}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: indexing
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: indexing
+  template:
+    metadata:
+      labels:
+        app: indexing
+    spec:
+      containers:
+      - name: indexing
+        image: localhost:5001/indexing:0.0.1
+        ports:
+        - containerPort: 8080
+\end{lstlisting}
+
+\subsubsection*{Services}
+
+\begin{lstlisting}
+apiVersion: v1
+kind: Service
+metadata:
+  name: indexing
+spec:
+  selector:
+    app: indexing
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080
+  type: ClusterIP
+\end{lstlisting}
+
+\subsubsection*{Cluster Creation with kind}
+
+\begin{lstlisting}
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+nodes:
+  - role: control-plane
+  - role: worker
+  - role: worker
+  - role: worker
+\end{lstlisting}
+
+\begin{lstlisting}
+kind create cluster --config=cluster/cluster-config.yaml
+\end{lstlisting}
+
+\subsubsection*{Local Docker Registry Integration}
+
+\begin{lstlisting}
+docker build -t localhost:5001/mi-app:latest .
+docker push localhost:5001/mi-app:latest
+\end{lstlisting}
+
+\subsubsection*{Verification and Cleanup}
+
+\begin{lstlisting}
+kubectl get nodes
+kubectl get pods -A
+kind delete cluster
+docker rm -f kind-registry
+\end{lstlisting}
+
+\subsubsection*{Conclusion}
+
+This Kubernetes investigation provides a foundation for future scalability and real-world deployment strategies.
+% ================== DOCKER HUB SECTION ==================
+\subsection{Container Preparation and Registry Publishing for Project Deployment}
+
+To ensure consistent execution across different laboratory machines and hardware architectures, 
+all microservice images were built using \texttt{docker buildx} with multi-architecture support.  
+Specifically, the \texttt{--platform linux/amd64,linux/arm64} flag was used to generate 
+cross-platform images that run seamlessly on both standard x86\_64 servers 
+and ARM-based systems (e.g., Apple Silicon).  
+This approach prevents compatibility issues such as 
+``no matching manifest for linux/amd64'' that may occur when building locally on ARM devices.
+
+All images were then published publicly to Docker Hub under the account 
+\textbf{giselabcr8888} using the \texttt{--push} flag. This ensures that both architectures, 
+along with their manifest list, are available for transparent pull operations on any machine.
+
+The repository is accessible at:
+
+\begin{center}
+\textbf{\url{https://hub.docker.com/repositories/giselabcr8888}}
+\end{center}
+
+\subsubsection{Authentication}
+
+\begin{verbatim}
+docker login
+\end{verbatim}
+
+\subsubsection{Multi-Architecture Image Building and Publishing}
+
+The following commands were used to build and publish each service image:
+
+\subsubsection*{Ingestion Service}
+
+\begin{verbatim}
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t giselabcr8888/ingestion:multi \
+  --push \
+  ./ingestion
+\end{verbatim}
+
+\subsubsection*{Indexing Service}
+
+\begin{verbatim}
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t giselabcr8888/indexing:multi \
+  --push \
+  ./indexing
+\end{verbatim}
+
+\subsubsection*{Search Service}
+
+\begin{verbatim}
+docker buildx build \
+  --platform linux/amd64,linux/arm64 \
+  -t giselabcr8888/search:multi \
+  --push \
+  ./search
+\end{verbatim}
+
+\subsubsection{Benefits of Using Multi-Architecture Publishing}
+
+\begin{itemize}
+    \item Ensures reproducibility across all laboratory environments.
+    \item Avoids the need to rebuild images in each machine.
+    \item Guarantees compatibility with both AMD64 and ARM64 architectures.
+    \item Provides a single, validated, publicly available image source for deployment.
+\end{itemize}
+
+\section{References}
+
+\begin{enumerate}
+    \item Kubernetes SIGs. \textit{Kind: Kubernetes IN Docker}. Available at: \url{https://kind.sigs.k8s.io/}
+    \item The Kubernetes Authors. \textit{Kubernetes Architecture Documentation}. Available at: \url{https://kubernetes.io/docs/concepts/architecture/}
+\end{enumerate}
+
+\end{document}
