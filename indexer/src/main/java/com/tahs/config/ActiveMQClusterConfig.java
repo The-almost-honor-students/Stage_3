@@ -3,9 +3,12 @@ package com.tahs.config;
 public class ActiveMQClusterConfig {
 
     private static final String[] BROKER_URLS = {
-            "tcp://10.26.14.223:61616",
-            "tcp://10.26.14.222:61616",
-            "tcp://10.26.14.221:61616"
+//            "tcp://10.26.14.223:61616",
+//            "tcp://10.26.14.222:61616",
+//            "tcp://10.26.14.221:61616"
+            "tcp://192.168.1.133:61616",
+            "tcp://192.168.1.143:61616",
+            "tcp://192.168.1.135:61616"
     };
 
     public static String getFailoverUrl() {
