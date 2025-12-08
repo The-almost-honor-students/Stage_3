@@ -11,18 +11,9 @@ import java.util.List;
 
 public class HazelcastClientFactory {
 
-    private static final List<String> CLUSTER_MEMBERS = Arrays.asList(
-            "192.168.1.133:5701",
-            "192.168.1.135:5701",
-            "192.168.1.143:5701"
-
-            //"10.26.14.223:5701",
-            //"10.26.14.222:5701",
-            //"10.26.14.221:5701");
-    );
-
-    public static HazelcastInstance create() {
-        return create(CLUSTER_MEMBERS);
+    public static HazelcastInstance create(String hazelcastMembersStr) {
+        List<String> members = Arrays.asList(hazelcastMembersStr.split(","));
+        return create(members);
     }
 
     public static HazelcastInstance create(String host, int port) {

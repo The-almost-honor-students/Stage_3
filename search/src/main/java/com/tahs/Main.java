@@ -26,7 +26,7 @@ public class Main {
     }
 
     private static Javalin createApp(AppConfig appConfig) {
-        var hazelcast = HazelcastClientFactory.create();
+        var hazelcast = HazelcastClientFactory.create(appConfig.clusterMembers());
         var mongoClient = MongoClients.create(appConfig.dbUrl());
         var indexService = new MongoInvertedIndexRepository(mongoClient, appConfig.databaseName(),
                 appConfig.collectionIndexName());
@@ -79,11 +79,16 @@ public class Main {
         String portStr = Optional.ofNullable(dotenv.get("PORT"))
                 .orElse(System.getenv("PORT"));
         int port = portStr != null ? Integer.parseInt(portStr) : 9090;
+        String hazelcastMembers = Optional.ofNullable(dotenv.get("HAZELCAST_MEMBERS"))
+                .orElse(System.getenv("HAZELCAST_MEMBERS"));
+        if (hazelcastMembers == null)
+            hazelcastMembers = "10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701";
         return new AppConfig(
                 dbUrl,
                 collectionMetaData,
                 collectionIndex,
                 databaseName,
-                port);
+                port,
+                hazelcastMembers);
     }
 }
