@@ -13,26 +13,40 @@ public class QueryBooksUseCase {
 
     private final InvertedIndexRepository invertedIndexRepository;
     private final MetadataRepository metadataRepository;
+    private final com.hazelcast.core.HazelcastInstance hazelcastInstance;
 
-    public QueryBooksUseCase(InvertedIndexRepository invertedIndexRepository, MetadataRepository metadataRepository) {
+    public QueryBooksUseCase(InvertedIndexRepository invertedIndexRepository, MetadataRepository metadataRepository,
+            com.hazelcast.core.HazelcastInstance hazelcastInstance) {
         this.invertedIndexRepository = invertedIndexRepository;
         this.metadataRepository = metadataRepository;
+        this.hazelcastInstance = hazelcastInstance;
     }
 
     public SearchDto execute(Map<String, List<String>> params) {
         var term = getTermValue(params);
-        var booksTerm = invertedIndexRepository.getBooksByTerm(term);
+
+        com.hazelcast.map.IMap<String, com.tahs.domain.BooksTerm> cache = hazelcastInstance.getMap("inverted-index");
+
+        var booksTerm = cache.get(term);
+        if (booksTerm == null) {
+            booksTerm = invertedIndexRepository.getBooksByTerm(term);
+            if (booksTerm != null) {
+                cache.put(term, booksTerm);
+            }
+        }
+
         List<BookMetadata> books = new ArrayList<>();
-        for (String bookId : booksTerm.booksId()){
-            books.add(metadataRepository.getById(bookId));
+        if (booksTerm != null && booksTerm.booksId() != null) {
+            for (String bookId : booksTerm.booksId()) {
+                books.add(metadataRepository.getById(bookId));
+            }
         }
         var bookMetadata = books.stream().filter(book -> matches(book, params)).toList();
         return new SearchDto(
                 term,
                 params,
                 bookMetadata.size(),
-                bookMetadata
-        );
+                bookMetadata);
     }
 
     private boolean matches(BookMetadata book, Map<String, List<String>> params) {
@@ -54,6 +68,7 @@ public class QueryBooksUseCase {
     private String getAuthorValue(Map<String, List<String>> params) {
         return params.get("author").stream().findFirst().orElse(null);
     }
+
     @Nullable
     private String getLanguageValue(Map<String, List<String>> params) {
         return params.get("language").stream().findFirst().orElse(null);

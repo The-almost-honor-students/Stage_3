@@ -32,7 +32,7 @@ public class Main {
                 appConfig.collectionIndexName());
         var metadataRepository = new MongoMetadataRepository(mongoClient, appConfig.databaseName(),
                 appConfig.collectionMetadataName());
-        var queryUseCase = new QueryBooksUseCase(indexService, metadataRepository);
+        var queryUseCase = new QueryBooksUseCase(indexService, metadataRepository, hazelcast);
 
         Javalin app = Javalin.create(config -> config.http.defaultContentType = "application/json");
 
