@@ -21,6 +21,7 @@ public class HazelcastServerConfig {
         networkConfig.setPort(5701);
         networkConfig.setPortAutoIncrement(true);
         networkConfig.setPortCount(10);
+        networkConfig.getRestApiConfig().setEnabled(true);
 
         JoinConfig joinConfig = networkConfig.getJoin();
         joinConfig.getMulticastConfig().setEnabled(false);
