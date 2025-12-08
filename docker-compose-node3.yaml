@@ -41,9 +41,9 @@ services:
     volumes:
       - ./broker/node3:/var/lib/artemis-instance/etc-override
 
-  ingestion:
+  crawler:
     image: giselabcr8888/crawler:1.1.0
-    container_name: ingestion
+    container_name: crawler
     ports:
       - "7070:7070"
     environment:
@@ -59,15 +59,16 @@ services:
     volumes:
       - engine-volume:/app
 
-  indexing:
+  indexer:
     image: giselabcr8888/indexer:1.1.0
-    container_name: indexing
+    container_name: indexer
     environment:
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
       - MONGO_URL=mongodb://mongodb_books:27017
       - ACTIVEMQ_USERNAME=clusterUser
       - ACTIVEMQ_PASSWORD=secret123
-      - ACTIVEMQ_URL=failover:(tcp://192.168.1.133:61616,tcp://192.168.1.135:61616,tcp://192.168.1.143:61616)?randomize=false
+      - ACTIVEMQ_URL=tcp://192.168.1.143:61616
+      # - ACTIVEMQ_URL=tcp://10.26.14.223:61616
       - HAZELCAST_MEMBERS=192.168.1.133:5701,192.168.1.135:5701,192.168.1.143:5701
       # - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
     ports:
