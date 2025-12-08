@@ -11,9 +11,13 @@ import java.util.List;
 public class HazelcastClientFactory {
 
     private static final List<String> CLUSTER_MEMBERS = Arrays.asList(
-            "10.26.14.223:5701",
-            "10.26.14.222:5701",
-            "10.26.14.221:5701");
+            "192.168.1.133",
+            "192.168.1.135",
+            "192.168.1.133");
+
+            //"10.26.14.223:5701",
+            //"10.26.14.222:5701",
+            //"10.26.14.221:5701");
 
     public static HazelcastInstance create() {
         return create(CLUSTER_MEMBERS);
