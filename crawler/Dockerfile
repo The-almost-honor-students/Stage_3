@@ -2,7 +2,7 @@ FROM maven:3.8.5-openjdk-17 AS dependencies
 LABEL authors="The-almost-honor-students"
 WORKDIR /app
 COPY pom.xml pom.xml
-RUN mvn -B -e org.apache.maven.plugins:maven-dependency-plugin:3.1.2:go-offline -DexcludeArtifactIds=ingestion
+RUN mvn -B -e org.apache.maven.plugins:maven-dependency-plugin:3.1.2:go-offline -DexcludeArtifactIds=crawler
 
 FROM maven:3.8.5-openjdk-17 AS builder
 
@@ -16,7 +16,7 @@ RUN mvn -B -e clean install -DskipTests
 FROM openjdk:17.0.2-jdk-slim
 
 WORKDIR /app
-COPY --from=builder /app/target/ingestion-app.jar /app.jar
+COPY --from=builder /app/target/crawler-app.jar /app.jar
 EXPOSE 7070
 
 ENTRYPOINT ["java", "-jar", "/app.jar"]

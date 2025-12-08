@@ -16,7 +16,7 @@ RUN mvn -B -e clean install -DskipTests
 FROM openjdk:17.0.2-jdk-slim
 
 WORKDIR /app
-COPY --from=builder /app/target/indexing-app.jar /app.jar
+COPY --from=builder /app/target/indexer-app.jar /app.jar
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "/app.jar"]

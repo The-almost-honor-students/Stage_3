@@ -42,7 +42,7 @@ services:
       - ./broker/node2:/var/lib/artemis-instance/etc-override
 
   ingestion:
-    image: giselabcr8888/ingestion:multi
+    image: giselabcr8888/crawler:1.1.0
     container_name: ingestion
     ports:
       - "7070:7070"
@@ -60,11 +60,14 @@ services:
       - engine-volume:/app
 
   indexing:
-    image: giselabcr8888/indexing:multi
+    image: giselabcr8888/indexer:1.1.0
     container_name: indexing
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
       - MONGO_URL=mongodb://mongodb_books:27017
-      - NODE_IP=${NODE_IP}
+      - ACTIVEMQ_USERNAME=clusterUser
+      - ACTIVEMQ_PASSWORD=secret123
+      - ACTIVEMQ_URL="failover:(tcp://192.168.1.133:61616,tcp://192.168.1.143:61616)?randomize=false"
       - HAZELCAST_MEMBERS=192.168.1.133:5701,192.168.1.135:5701,192.168.1.143:5701
       # - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
     ports:
@@ -80,9 +83,10 @@ services:
       - engine-volume:/app
 
   search:
-    image: giselabcr8888/search:multi
+    image: giselabcr8888/search:1.1.0
     container_name: search
     environment:
+      - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
       - MONGO_URL=mongodb://mongodb_books:27017
       - HAZELCAST_MEMBERS=192.168.1.133:5701,192.168.1.135:5701,192.168.1.143:5701
       # - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
