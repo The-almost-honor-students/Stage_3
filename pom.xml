@@ -13,6 +13,5 @@
         <module>crawler</module>
         <module>indexer</module>
         <module>search</module>
-        <module>control</module>
     </modules>
 </project>
