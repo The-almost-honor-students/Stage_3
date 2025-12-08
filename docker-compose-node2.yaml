@@ -1,0 +1,132 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:latest
+    container_name: mongodb_books
+    environment:
+      - MONGO_INITDB_DATABASE=books
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./mongo_data:/data/db
+    networks:
+      - mongo-net
+
+  mongo-express:
+    image: mongo-express:latest
+    container_name: mongo_express
+    environment:
+      - ME_CONFIG_MONGODB_SERVER=mongodb_books
+      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin
+    ports:
+      - "8085:8085"
+    depends_on:
+      - mongo
+    networks:
+      - mongo-net
+
+  activemq:
+    image: apache/activemq-artemis:latest
+    container_name: artemis_broker
+    restart: always
+    ports:
+      - "61616:61616"
+      - "8161:8161"
+    environment:
+      - ARTEMIS_USER=admin
+      - ARTEMIS_PASSWORD=admin
+    volumes:
+      - ./broker/node2:/var/lib/artemis-instance/etc-override
+
+  ingestion:
+    image: giselabcr8888/crawler:1.1.0
+    container_name: ingestion
+    ports:
+      - "7070:7070"
+    environment:
+      - MONGO_URL=mongodb://mongodb_books:27017
+      - ACTIVEMQ_URL=failover:(tcp://192.168.1.133:61616,tcp://192.168.1.135:61616,tcp://192.168.1.143:61616)
+      # - ACTIVEMQ_URL=failover:(tcp://10.26.14.223:61616,tcp://10.26.14.222:61616,tcp://10.26.14.221:61616)
+    depends_on:
+      - mongo
+      - activemq
+    networks:
+      - mongo-net
+      - engine-net
+    volumes:
+      - engine-volume:/app
+
+  indexing:
+    image: giselabcr8888/indexer:1.1.0
+    container_name: indexing
+    environment:
+      - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
+      - MONGO_URL=mongodb://mongodb_books:27017
+      - ACTIVEMQ_USERNAME=clusterUser
+      - ACTIVEMQ_PASSWORD=secret123
+      - ACTIVEMQ_URL="failover:(tcp://192.168.1.133:61616,tcp://192.168.1.135:61616,tcp://192.168.1.143:61616)?randomize=false"
+      - HAZELCAST_MEMBERS=192.168.1.133:5701,192.168.1.135:5701,192.168.1.143:5701
+      # - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
+    ports:
+      - "8080:8080"
+      - "5701:5701"
+    depends_on:
+      - mongo
+      - activemq
+    networks:
+      - mongo-net
+      - engine-net
+    volumes:
+      - engine-volume:/app
+
+  search:
+    image: giselabcr8888/search:1.1.0
+    container_name: search
+    environment:
+      - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
+      - MONGO_URL=mongodb://mongodb_books:27017
+      - HAZELCAST_MEMBERS=192.168.1.133:5701,192.168.1.135:5701,192.168.1.143:5701
+      # - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
+    ports:
+      - "9090:9090"
+      - "5702:5701"
+    depends_on:
+      - mongo
+      - activemq
+    networks:
+      - mongo-net
+      - engine-net
+    volumes:
+      - engine-volume:/app/data
+
+  syncthing:
+    image: linuxserver/syncthing:2.0.12
+    container_name: syncthing
+    hostname: node2
+    #    network_mode: host
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Atlantic/Canary
+      - STGUIAPIKEY=mysecretapikey
+    volumes:
+      - ./syncthing_config:/config
+      - engine-volume:/app
+    ports:
+      - "8384:8384"       # Web UI
+      - "22000:22000/tcp" # Sync Traffic
+      - "22000:22000/udp" # Sync Traffic
+      - "21027:21027/udp" # Local Discovery
+    restart: unless-stopped
+
+networks:
+  mongo-net:
+    driver: bridge
+  engine-net:
+    driver: bridge
+
+volumes:
+  engine-volume:
