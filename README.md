@@ -146,6 +146,15 @@ All services are **dockerized** and can be executed independently or together us
 ### Data Persistence
 The MongoDB container is configured to persist data locally in the `mongo_data` directory at the project root. This ensures that your database content survives container restarts.
 
+### Build Docker Images for ARM and AMD64
+
+```bash
+docker buildx build \
+--platform linux/amd64,linux/arm64 \
+-t giselabcr8888/mi-app:latest \
+--push \
+.
+```
 ### Steps to Run
 
 1. **Set the NODE_IP environment variable** (required for multi-node deployment):
