@@ -63,6 +63,7 @@ services:
     image: giselabcr8888/indexer:1.1.0
     container_name: indexer
     environment:
+      - NODE_IP=192.168.1.143
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
       - MONGO_URL=mongodb://mongodb_books:27017
       - ACTIVEMQ_USERNAME=clusterUser
@@ -87,6 +88,7 @@ services:
     image: giselabcr8888/search:1.1.0
     container_name: search
     environment:
+      - NODE_IP=192.168.1.143
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
       - MONGO_URL=mongodb://mongodb_books:27017
       - DATABASE_NAME=books
