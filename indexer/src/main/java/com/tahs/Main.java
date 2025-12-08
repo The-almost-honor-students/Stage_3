@@ -8,6 +8,7 @@ import com.mongodb.client.MongoClients;
 import com.tahs.application.exceptions.BookNotFound;
 import com.tahs.application.usecase.IndexService;
 import com.tahs.config.AppConfig;
+import com.tahs.config.HazelcastServerConfig;
 import com.tahs.infrastructure.cache.hazelcast.CachedInvertedIndexRepository;
 import com.tahs.infrastructure.cache.hazelcast.CachedMetadataRepository;
 import com.tahs.infrastructure.persistence.MongoInvertedIndexRepository;
@@ -148,8 +149,8 @@ public class Main {
                                 .orElse(System.getenv("NODE_IP"));
 
                 var hazelcastConfig = nodeIp != null
-                                ? com.tahs.config.HazelcastServerConfig.createConfigForNode(nodeIp)
-                                : com.tahs.config.HazelcastServerConfig.createConfig();
+                                ? HazelcastServerConfig.createConfigForNode(nodeIp,appConfig)
+                                : HazelcastServerConfig.createConfig(appConfig.hazelcastMembers());
 
                 var hazelcastInstance = com.hazelcast.core.Hazelcast.newHazelcastInstance(hazelcastConfig);
 

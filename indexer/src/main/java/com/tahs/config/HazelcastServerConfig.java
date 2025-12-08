@@ -13,8 +13,10 @@ public class HazelcastServerConfig {
             "192.168.1.135:5701",
             "192.168.1.143:5701");
 
-    public static Config createConfig() {
+    public static Config createConfig(String hazelcastMembersStr) {
         Config config = new Config();
+        List<String> members = Arrays.asList(hazelcastMembersStr.split(","));
+
         config.setClusterName(CLUSTER_NAME);
 
         NetworkConfig networkConfig = config.getNetworkConfig();
@@ -28,7 +30,7 @@ public class HazelcastServerConfig {
 
         TcpIpConfig tcpIpConfig = joinConfig.getTcpIpConfig();
         tcpIpConfig.setEnabled(true);
-        tcpIpConfig.setMembers(CLUSTER_MEMBERS);
+        tcpIpConfig.setMembers(members);
         tcpIpConfig.setConnectionTimeoutSeconds(10);
 
         MapConfig invertedIndexMapConfig = new MapConfig("inverted-index");
@@ -53,8 +55,8 @@ public class HazelcastServerConfig {
         return config;
     }
 
-    public static Config createConfigForNode(String nodeIp) {
-        Config config = createConfig();
+    public static Config createConfigForNode(String nodeIp, AppConfig appConfig) {
+        Config config = createConfig(appConfig.hazelcastMembers());
 
         config.getNetworkConfig().setPublicAddress(nodeIp);
 
