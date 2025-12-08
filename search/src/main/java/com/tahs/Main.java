@@ -4,6 +4,7 @@ import com.mongodb.client.MongoClients;
 import com.tahs.application.dto.SearchDto;
 import com.tahs.application.usecase.QueryBooksUseCase;
 import com.tahs.config.AppConfig;
+import com.tahs.infrastructure.hazelcast.HazelcastClientFactory;
 import com.tahs.infrastructure.persistence.MongoInvertedIndexRepository;
 import com.tahs.infrastructure.persistence.MongoMetadataRepository;
 import io.github.cdimascio.dotenv.Dotenv;
