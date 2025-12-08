@@ -65,7 +65,7 @@ services:
     environment:
       - NODE_IP=192.168.1.133
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
-      - MONGO_URL=mongodb://mongodb_books:27017
+      - MONGO_URL=mongodb://192.168.1.135:27017
       - ACTIVEMQ_USERNAME=clusterUser
       - ACTIVEMQ_PASSWORD=secret123
       - ACTIVEMQ_URL=tcp://192.168.1.133:61616
