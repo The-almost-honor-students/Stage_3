@@ -89,6 +89,9 @@ services:
     environment:
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
       - MONGO_URL=mongodb://mongodb_books:27017
+      - DATABASE_NAME=books
+      - COLLECTION_METADATA=metadata
+      - COLLECTION_INDEX=inverted_index
       - HAZELCAST_MEMBERS=192.168.1.133:5701,192.168.1.135:5701,192.168.1.143:5701
       # - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
     ports:
