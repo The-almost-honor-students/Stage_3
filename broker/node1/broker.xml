@@ -268,7 +268,7 @@ under the License.
             <max-read-page-bytes>20M</max-read-page-bytes>
 
             <!-- Limit on paging capacity before starting to throw errors -->
-            <redistribution-delay>5</redistribution-delay>
+            <redistribution-delay>30</redistribution-delay>
             <page-limit-bytes>-1</page-limit-bytes>
             <page-limit-messages>-1</page-limit-messages>
           </address-setting>
