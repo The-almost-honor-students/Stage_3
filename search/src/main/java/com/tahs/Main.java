@@ -81,9 +81,9 @@ public class Main {
         int port = portStr != null ? Integer.parseInt(portStr) : 9090;
         return new AppConfig(
                 dbUrl,
-                databaseName,
                 collectionMetaData,
                 collectionIndex,
+                databaseName,
                 port);
     }
 }
