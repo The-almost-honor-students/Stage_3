@@ -12,8 +12,12 @@ import java.util.List;
 public class HazelcastClientFactory {
 
     public static HazelcastInstance create(String hazelcastMembersStr) {
+        return create(hazelcastMembersStr, null);
+    }
+
+    public static HazelcastInstance create(String hazelcastMembersStr, String nodeIp) {
         List<String> members = Arrays.asList(hazelcastMembersStr.split(","));
-        return create(members);
+        return create(members, nodeIp);
     }
 
     public static HazelcastInstance create(String host, int port) {
@@ -21,9 +25,18 @@ public class HazelcastClientFactory {
     }
 
     public static HazelcastInstance create(List<String> members) {
+        return create(members, null);
+    }
+
+    public static HazelcastInstance create(List<String> members, String nodeIp) {
 
         ClientConfig cfg = new ClientConfig();
         cfg.setClusterName("gutenberg-search-cluster");
+
+        if (nodeIp != null) {
+            cfg.setProperty("hazelcast.socket.bind.any", "false");
+            cfg.setProperty("hazelcast.local.localAddress", nodeIp);
+        }
 
         ClientNetworkConfig network = cfg.getNetworkConfig();
         members.forEach(network::addAddress);
