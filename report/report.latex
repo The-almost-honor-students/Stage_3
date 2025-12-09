@@ -24,46 +24,113 @@
 \usepackage{fancyhdr}
 \usepackage{microtype}
 \usepackage[edges]{forest}
-\usepackage[colorlinks=false, pdfborder={0 0 0}]{hyperref}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{enumitem}
+\usepackage{longtable}
+\usepackage[colorlinks=true, linkcolor=blue, filecolor=magenta, urlcolor=cyan]{hyperref}
+
+\tcbuselibrary{skins,breakable}
+\usetikzlibrary{shapes,arrows,positioning,calc}
 
 \hypersetup{
   linktoc=all,
-  hidelinks
+  pdftitle={Stage 3 - Distributed Book Search Platform},
+  pdfauthor={The Almost Honor Students},
+  colorlinks=true,
+  linkcolor=black,
+  filecolor=black,
+  urlcolor=black,
+  citecolor=black
 }
 
 % ================== Configuración general ==================
-\geometry{margin=2.5cm}
+\geometry{top=2.5cm, bottom=2.5cm, left=3cm, right=3cm}
 \setstretch{1.15}
 \renewcommand\theadfont{\normalsize\bfseries}
 
+% ================== Colores personalizados ==================
+\definecolor{primaryblue}{RGB}{17,104,189}
+\definecolor{secondaryblue}{RGB}{67,141,213}
+\definecolor{lightblue}{RGB}{133,187,240}
+\definecolor{darkgray}{RGB}{51,51,51}
+\definecolor{mediumgray}{RGB}{102,102,102}
+\definecolor{successgreen}{RGB}{76,175,80}
+\definecolor{warningorange}{RGB}{255,152,0}
+\definecolor{errorred}{RGB}{244,67,54}
+\definecolor{infocyan}{RGB}{0,188,212}
+
 % Encabezados / pies
 \fancyhf{}
-\fancyhead[L]{Stage 3 -- Big Data}
-\fancyhead[R]{The Almost Honor Students}
+\fancyhead[L]{\color{primaryblue}\textbf{Stage 3 -- Big Data}}
+\fancyhead[R]{\color{secondaryblue}\textit{The Almost Honor Students}}
 \fancyfoot[C]{\thepage}
-\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{primaryblue}\leaders\hrule height \headrulewidth\hfill}}
 \pagestyle{fancy}
 
-% Estilo de secciones
-\titleformat{\section}{\bfseries\Large}{\thesection.}{0.5em}{}
-\titleformat{\subsection}{\bfseries\large}{\thesubsection}{0.5em}{}
-\titleformat{\subsubsection}{\bfseries\normalsize}{\thesubsubsection}{0.5em}{}
+% Estilo de secciones con color
+\titleformat{\section}{\color{black}\bfseries\Large}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\color{black}\bfseries\large}{\thesubsection}{0.5em}{}
+\titleformat{\subsubsection}{\color{black}\bfseries\normalsize}{\thesubsubsection}{0.5em}{}
 
 % ================== Listings (código) ==================
 \definecolor{codebg}{RGB}{247,247,247}
+\definecolor{codeframe}{RGB}{200,200,200}
 \lstdefinestyle{code}{
   backgroundcolor=\color{codebg},
   basicstyle=\ttfamily\small,
-  keywordstyle=\bfseries,
-  commentstyle=\itshape\color{gray},
-  stringstyle=\color{black},
+  keywordstyle=\color{primaryblue}\bfseries,
+  commentstyle=\itshape\color{mediumgray},
+  stringstyle=\color{successgreen},
   showstringspaces=false,
   frame=single,
-  framerule=0.3pt,
+  framerule=0.5pt,
+  rulecolor=\color{codeframe},
   breaklines=true,
-  tabsize=2
+  tabsize=2,
+  numbers=left,
+  numberstyle=\tiny\color{mediumgray},
+  numbersep=8pt
 }
 \lstset{style=code}
+
+% ================== Cajas personalizadas ==================
+\newtcolorbox{infobox}[1][]{
+  colback=infocyan!5!white,
+  colframe=infocyan!75!black,
+  fonttitle=\bfseries,
+  title=#1,
+  breakable,
+  enhanced jigsaw
+}
+
+\newtcolorbox{warningbox}[1][]{
+  colback=warningorange!5!white,
+  colframe=warningorange!75!black,
+  fonttitle=\bfseries,
+  title=#1,
+  breakable,
+  enhanced jigsaw
+}
+
+\newtcolorbox{successbox}[1][]{
+  colback=successgreen!5!white,
+  colframe=successgreen!75!black,
+  fonttitle=\bfseries,
+  title=#1,
+  breakable,
+  enhanced jigsaw
+}
+
+\newtcolorbox{techbox}[1][]{
+  colback=primaryblue!5!white,
+  colframe=primaryblue!75!black,
+  fonttitle=\bfseries,
+  title=#1,
+  breakable,
+  enhanced jigsaw
+}
 
 \begin{document}
 
@@ -112,9 +179,17 @@
 \end{titlepage}
 
 
+\section*{Abstract}
+
+\begin{infobox}[Project Summary]
+This report presents the design, implementation, and deployment of a distributed book search platform built on a cluster architecture. The system leverages microservices, event-driven messaging, distributed caching, and high-availability patterns to create a scalable solution for indexing and searching digital books from Project Gutenberg. The architecture demonstrates practical applications of Big Data technologies including ActiveMQ Artemis clustering, Hazelcast distributed caching, and MongoDB for persistent storage.
+\end{infobox}
+
+\vspace{0.5cm}
+
 \section*{Keywords}
 
-Docker, Kubernetes, Cluster, Microservices, ActiveMQ Artemis, High Availability, kind.
+\textbf{Docker} $\bullet$ \textbf{Kubernetes} $\bullet$ \textbf{Cluster Architecture} $\bullet$ \textbf{Microservices} $\bullet$ \textbf{ActiveMQ Artemis} $\bullet$ \textbf{High Availability} $\bullet$ \textbf{Hazelcast} $\bullet$ \textbf{MongoDB} $\bullet$ \textbf{Event-Driven Architecture} $\bullet$ \textbf{Distributed Systems}
 
 \tableofcontents
 \newpage
@@ -122,7 +197,31 @@ Docker, Kubernetes, Cluster, Microservices, ActiveMQ Artemis, High Availability,
 % ================== SECTIONS ==================
 \section{Introduction}
 
+\subsection{Project Context}
+
 In this stage, the focus has shifted towards creating a robust, distributed architecture capable of handling large-scale data processing for a search engine. We maintain the core microservices (Ingestion, Indexing, Search) but deploy them in a clustered environment ensuring scalability and fault tolerance.
+
+\begin{successbox}[Key Objectives]
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Scalability}: Design a system that can scale horizontally across multiple nodes
+    \item \textbf{High Availability}: Eliminate single points of failure through clustering
+    \item \textbf{Performance}: Optimize search and indexing operations using distributed caching
+    \item \textbf{Fault Tolerance}: Ensure system resilience through redundancy and failover mechanisms
+    \item \textbf{Real-World Deployment}: Implement and test on actual laboratory infrastructure
+\end{itemize}
+\end{successbox}
+
+\subsection{System Overview}
+
+The Book Search Platform is a distributed system designed to:
+
+\begin{enumerate}
+    \item \textbf{Discover} books from Project Gutenberg's public domain collection
+    \item \textbf{Download} and store books in a distributed datalake
+    \item \textbf{Index} book content for efficient full-text search
+    \item \textbf{Search} across the indexed corpus with low latency
+    \item \textbf{Scale} horizontally to handle increasing data volumes
+\end{enumerate}
 
 \section{System Architecture}
 
@@ -130,15 +229,21 @@ This project implements a distributed architecture designed for scalability and 
 
 \subsection{Distributed Messaging: ActiveMQ Artemis}
 
+\begin{techbox}[Message Broker Architecture]
 A core component of our architecture is the message broker. We have migrated to using \textbf{ActiveMQ Artemis} configured as a high-availability cluster.
-We have deployed a 3-node ActiveMQ Artemis cluster. The nodes (`node1`, `node2`, `node3`) work together to form a distributed messaging fabric. \textbf{ActiveMQ Artemis} was chosen for its high performance and advanced features, as detailed in the official documentation [3].  
+
+We have deployed a \textbf{3-node ActiveMQ Artemis cluster}. The nodes (\texttt{node1}, \texttt{node2}, \texttt{node3}) work together to form a distributed messaging fabric. \textbf{ActiveMQ Artemis} was chosen for its high performance and advanced features, as detailed in the official documentation [3].
+\end{techbox}
+
+\vspace{0.3cm}
+
 This setup provides several key advantages:
 
 \begin{enumerate}
     \item \textbf{High Efficiency and Load Distribution}: By redistributing messages across the cluster, we ensure that no single broker is a bottleneck. Consumers can connect to any node in the cluster, and messages are efficiently routed to where they are needed. This redistribution mechanism optimizes the consumption of messages by the worker machines (Ingestion and Indexing services).
-    
+
     \item \textbf{Redistribution Configuration}: The key mechanism enabling this distributed behavior is the \texttt{redistribution-delay} setting within the \texttt{broker.xml} configuration files. By setting this parameter to \texttt{0} inside the \texttt{<address-settings>} block, we ensure that messages are immediately redistributed to other nodes if there are no local consumers available, maximizing throughput and minimizing latency.
-    
+
     \item \textbf{High Availability and Fault Tolerance}: The cluster architecture avoids a \textit{Single Point of Failure (SPOF)}. If one machine or broker node goes down, the other nodes continue to operate, ensuring the workflow is not interrupted. The system is highly distributed, meaning the failure of a single component does not stop the entire data processing pipeline.
 \end{enumerate}
 
@@ -146,29 +251,122 @@ The services connect to the broker using a failover transport string, enabling t
 
 \subsection{Data Management: Hazelcast and MongoDB}
 
-To optimize performance without sacrificing data integrity, we implemented a hybrid data strategy:
+\begin{infobox}[Hybrid Data Strategy]
+To optimize performance without sacrificing data integrity, we implemented a hybrid data strategy combining in-memory caching with persistent storage:
+\end{infobox}
 
-\begin{itemize}
-    \item \textbf{Hazelcast (Distributed Caching)}: We utilize \textbf{Hazelcast} as an in-memory data grid. It acts as a distributed cache to store inverted index fragments during the heavy indexing process. This allows for extremely fast read/write operations (low latency) that are essential for the performance of the search engine.
-    
-    \item \textbf{MongoDB (Persistence Layer)}: It is important to note that Hazelcast \textbf{does not replace} MongoDB. \textbf{MongoDB} remains the authoritative source of truth, providing persistent storage for the book references and metadata. While Hazelcast offers speed for active processing, MongoDB ensures that data is durably stored and preserved across system restarts or failures.
-\end{itemize}
+\vspace{0.3cm}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|p{5cm}|p{5cm}|}
+\hline
+\rowcolor{lightblue}
+\textbf{Component} & \textbf{Role} & \textbf{Key Features} \\
+\hline
+\textbf{Hazelcast} & Distributed In-Memory Cache &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Ultra-low latency ($<$ 1ms)
+    \item Distributed data grid
+    \item Automatic partitioning
+    \item Cluster-wide synchronization
+\end{itemize} \\
+\hline
+\textbf{MongoDB} & Persistent Data Store &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Authoritative source of truth
+    \item Durable storage
+    \item Book metadata and references
+    \item Survives system restarts
+\end{itemize} \\
+\hline
+\end{tabular}
+\caption{Data layer components and their responsibilities}
+\end{table}
+
+\begin{warningbox}[Important Note]
+\textbf{Hazelcast does NOT replace MongoDB}. Hazelcast provides speed for active processing and caching, while MongoDB ensures data durability and persistence. Both components work together to provide optimal performance and reliability.
+\end{warningbox}
 
 \section{Microservices Architecture}
 
+\subsection{Core Services Overview}
+
 The system relies on three main microservices, all containerized and orchestrated:
 
-\begin{itemize}
-    \item \textbf{Ingestion Service}: Responsible for downloading books from Project Gutenberg. It communicates with the broker to receive commands and publishes status updates. Additionally, it implements a deduplication mechanism to avoid re-downloading and re-indexing books that are already present in the datalake. This implementation was straightforward, relying on a simple check for file existence before initiating a download. Despite its simplicity, the benefits are significant: it prevents redundant network usage and saves processing power (CPU) by ensuring that only new, unprocessed content is handled by the system.
-    \item \textbf{Indexing Service}: Consumes book data and builds an inverted index. It uses a distributed map (Hazelcast) to store terms and occurrences effectively across the cluster.
-    \item \textbf{Search Service}: Provides the user interface and API for querying the indexed books.
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{4.5cm}|p{6cm}|}
+\hline
+\rowcolor{primaryblue!20}
+\textbf{Service} & \textbf{Primary Responsibility} & \textbf{Key Features} \\
+\hline
+\textbf{Crawler} & Book Discovery \& Download &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Fetches books from Project Gutenberg
+    \item Deduplication mechanism
+    \item Event publishing to ActiveMQ
+    \item Datalake storage integration
+\end{itemize} \\
+\hline
+\textbf{Indexer} & Content Indexing &
+\begin{itemize}[leftmargin=*, nosep]
+    \item Event-driven processing
+    \item Inverted index creation
+    \item Hazelcast distributed storage
+    \item MongoDB persistence
+\end{itemize} \\
+\hline
+\textbf{Search} & Query Processing &
+\begin{itemize}[leftmargin=*, nosep]
+    \item REST API endpoint
+    \item Cache-first query strategy
+    \item Full-text search capabilities
+    \item Load-balanced deployment
+\end{itemize} \\
+\hline
+\end{tabular}
+\caption{Microservices architecture components}
+\end{table}
+
+\subsection{Deduplication Mechanism}
+
+\begin{successbox}[Efficiency Optimization]
+The \textbf{Crawler Service} implements an intelligent deduplication mechanism to avoid re-downloading and re-indexing books that are already present in the datalake.
+
+\textbf{Implementation}: Simple file existence check before initiating download
+
+\textbf{Benefits}:
+\begin{itemize}[leftmargin=*]
+    \item Prevents redundant network usage
+    \item Saves processing power (CPU)
+    \item Reduces storage I/O operations
+    \item Ensures only new content is processed
 \end{itemize}
+\end{successbox}
+
+\subsection{Task Scheduler for Periodic Crawling}
+
+To avoid relying on manual execution of the Crawler service and to keep the datalake continuously up to date, a \textbf{task scheduler} was added to the architecture.
+
+\begin{successbox}[Automated Book Discovery]
+The task scheduler is responsible for periodically triggering new crawling jobs without human intervention. Its main responsibilities are:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Periodic execution}: automatically enqueue new crawl tasks at configurable intervals (e.g., every few minutes or hours).
+    \item \textbf{Integration with the message broker}: instead of downloading books directly, scheduled tasks publish crawl requests to ActiveMQ Artemis, so that worker instances of the Crawler can process them asynchronously.
+    \item \textbf{Datastore refresh}: ensures that newly available books in Project Gutenberg are gradually discovered and ingested into the datalake and index.
+    \item \textbf{Operational robustness}: reduces the risk of forgetting to execute manual scripts and provides a more realistic, production-like ingestion model.
+\end{itemize}
+\end{successbox}
+
+From the perspective of the rest of the system, the scheduler behaves as another producer of crawl events. This keeps the design loosely coupled: the Crawler service and the downstream Indexer do not need to know whether a request was created manually or by the task scheduler.
+
 
 \section{Background and Investigation Work}
 
 \subsection{Kubernetes: Local Cluster Deployment with kind}
 
-As part of the investigation, Kubernetes was studied using the official kind documentation [1], and the internal architecture of Kubernetes was analyzed through the official project documentation [2].  
+As part of the investigation, Kubernetes was studied using the official kind documentation [1], and the internal architecture of Kubernetes was analyzed through the official project documentation [2].
 A significant effort was dedicated to understanding and configuring Kubernetes using \texttt{kind} (Kubernetes IN Docker) [1]. Although Kubernetes was not required for the final deployment of the microservices, it was intentionally explored due to its relevance in large-scale distributed architectures.
 
 This research complements the main system development by offering insights into how the ingestion, indexing, and search services could operate inside a realistic distributed environment. Kubernetes provides features such as declarative deployments, load balancing, automatic recovery, and namespace isolation.
@@ -199,8 +397,8 @@ The Kubernetes configuration used during the investigation was organized in \tex
 Each included:
 
 \begin{itemize}
-    \item Namespace  
-    \item Deployment  
+    \item Namespace
+    \item Deployment
     \item Service
 \end{itemize}
 
@@ -292,78 +490,53 @@ This Kubernetes investigation provides a foundation for future scalability and r
 % ================== DOCKER HUB SECTION ==================
 \subsection{Container Preparation and Registry Publishing for Project Deployment}
 
-To ensure consistent execution across different laboratory machines and hardware architectures, 
-all microservice images were built using \texttt{docker buildx} with multi-architecture support.  
-Specifically, the \texttt{--platform linux/amd64,linux/arm64} flag was used to generate 
-cross-platform images that run seamlessly on both standard x86\_64 servers 
-and ARM-based systems (e.g., Apple Silicon).  
-This approach prevents compatibility issues such as 
-``no matching manifest for linux/amd64'' that may occur when building locally on ARM devices.
+\begin{techbox}[Multi-Architecture Build Strategy]
+To ensure consistent execution across different laboratory machines and hardware architectures, all microservice images were built using \texttt{docker buildx} with multi-architecture support.
+\end{techbox}
 
-All images were then published publicly to Docker Hub under the account 
-\textbf{giselabcr8888} using the \texttt{--push} flag. This ensures that both architectures, 
-along with their manifest list, are available for transparent pull operations on any machine.
+\vspace{0.3cm}
 
-The repository is accessible at:
-
-\begin{center}
-\textbf{\url{https://hub.docker.com/repositories/giselabcr8888}}
-\end{center}
-
-\subsubsection{Authentication}
-
-\begin{verbatim}
-docker login
-\end{verbatim}
-
-\subsubsection{Multi-Architecture Image Building and Publishing}
-
-The following commands were used to build and publish each service image:
-
-\subsubsection*{Ingestion Service}
-
-\begin{verbatim}
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -t giselabcr8888/ingestion:multi \
-  --push \
-  ./ingestion
-\end{verbatim}
-
-\subsubsection*{Indexing Service}
-
-\begin{verbatim}
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -t giselabcr8888/indexing:multi \
-  --push \
-  ./indexing
-\end{verbatim}
-
-\subsubsection*{Search Service}
-
-\begin{verbatim}
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -t giselabcr8888/search:multi \
-  --push \
-  ./search
-\end{verbatim}
-
-\subsubsection{Benefits of Using Multi-Architecture Publishing}
+Specifically, the \texttt{--platform linux/amd64,linux/arm64} flag was used to generate cross-platform images that run seamlessly on both:
 
 \begin{itemize}
-    \item Ensures reproducibility across all laboratory environments.
-    \item Avoids the need to rebuild images in each machine.
-    \item Guarantees compatibility with both AMD64 and ARM64 architectures.
-    \item Provides a single, validated, publicly available image source for deployment.
+    \item \textbf{x86\_64 servers}: Standard Intel/AMD processors
+    \item \textbf{ARM-based systems}: Apple Silicon (M1/M2/M3) and ARM servers
 \end{itemize}
+
+\begin{infobox}[Docker Hub Repository]
+All images were published publicly to Docker Hub under the account \textbf{giselabcr8888} using the \texttt{--push} flag. This ensures that both architectures, along with their manifest list, are available for transparent pull operations on any machine.
+
+\textbf{Repository URL}: \url{https://hub.docker.com/repositories/giselabcr8888}
+\end{infobox}
+
+\subsubsection{Benefits of Multi-Architecture Publishing}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\rowcolor{successgreen!20}
+\textbf{Benefit} & \textbf{Description} \\
+\hline
+\textbf{Reproducibility} & Ensures consistent behavior across all laboratory environments \\
+\hline
+\textbf{Efficiency} & Avoids the need to rebuild images on each machine \\
+\hline
+\textbf{Compatibility} & Guarantees compatibility with both AMD64 and ARM64 architectures \\
+\hline
+\textbf{Centralization} & Provides a single, validated, publicly available image source for deployment \\
+\hline
+\textbf{Version Control} & Enables proper versioning and rollback capabilities \\
+\hline
+\end{tabular}
+\caption{Advantages of multi-architecture container publishing}
+\end{table}
 
 \section{Laboratory Deployment Configuration}
 
 \subsection{Docker Compose Files for Multi-Node Deployment}
 
-To facilitate the deployment and testing of the distributed system in the laboratory environment, 
+To facilitate the deployment and testing of the distributed system in the laboratory environment,
 three separate Docker Compose configuration files were created, one for each node in the cluster:
 
 \begin{itemize}
@@ -372,12 +545,12 @@ three separate Docker Compose configuration files were created, one for each nod
     \item \texttt{docker-compose-node3.yaml}
 \end{itemize}
 
-Each file is specifically configured for its corresponding node, with appropriate IP addresses, 
+Each file is specifically configured for its corresponding node, with appropriate IP addresses,
 service configurations, and network settings tailored to the laboratory infrastructure.
 
 \subsection{Deployment Commands}
 
-To execute and start the services on each node, the following commands must be run on the 
+To execute and start the services on each node, the following commands must be run on the
 respective machines:
 
 \begin{verbatim}
@@ -391,28 +564,28 @@ docker compose -f docker-compose-node2.yaml up -d
 docker compose -f docker-compose-node3.yaml up -d
 \end{verbatim}
 
-The \texttt{-d} flag ensures that the containers run in detached mode, allowing them to 
+The \texttt{-d} flag ensures that the containers run in detached mode, allowing them to
 operate in the background.
 
 \subsection{Updated Docker Images}
 
-New versions of the microservice images were built and published to Docker Hub to support 
+New versions of the microservice images were built and published to Docker Hub \href{https://hub.docker.com/repositories/giselabcr8888}{(https://hub.docker.com/repositories/giselabcr8888)} to support
 the laboratory deployment. The following images and their versions are now available:
 
 \begin{itemize}
-    \item \textbf{Crawler Service}: \texttt{giselabcr8888/crawler:1.1.0}
+    \item \textbf{Crawler Service}: \texttt{giselabcr8888/crawler:1.2.0}
     \item \textbf{Indexer Service}: \texttt{giselabcr8888/indexer:1.1.0}
     \item \textbf{Search Service}: \texttt{giselabcr8888/search:1.1.0}
 \end{itemize}
 
-These images incorporate all the necessary configurations and optimizations for distributed 
-execution in the cluster environment, including proper Hazelcast client configuration, 
+These images incorporate all the necessary configurations and optimizations for distributed
+execution in the cluster environment, including proper Hazelcast client configuration,
 ActiveMQ cluster connectivity, and MongoDB integration.
 
 \subsection{GitHub Laboratory Branch}
 
-A dedicated branch named \textbf{lab} was created in the GitHub repository specifically for 
-laboratory testing and deployment. This branch contains all the configurations, scripts, and 
+A dedicated branch named \textbf{lab} was created in the GitHub repository specifically for
+laboratory testing and deployment. This branch contains all the configurations, scripts, and
 documentation required to successfully deploy and test the system in the laboratory environment.
 
 The branch can be accessed at:
@@ -423,7 +596,7 @@ The branch can be accessed at:
 
 \subsection{Transversal Services Architecture}
 
-\textbf{Transversal services} are those common components that are shared across the cluster 
+\textbf{Transversal services} are those common components that are shared across the cluster
 and must be available to all nodes. In our architecture, these include:
 
 \begin{itemize}
@@ -431,11 +604,11 @@ and must be available to all nodes. In our architecture, these include:
     \item \textbf{Nginx}: The reverse proxy and load balancer (when applicable)
 \end{itemize}
 
-In addition to the Docker Compose file for each node's specific services, the transversal 
-services (MongoDB and Nginx) are also deployed on designated machines to ensure availability 
+In addition to the Docker Compose file for each node's specific services, the transversal
+services (MongoDB and Nginx) are also deployed on designated machines to ensure availability
 and proper data persistence.
 
-For our laboratory testing configuration, we deployed the transversal services on \textbf{Node 2}. 
+For our laboratory testing configuration, we deployed the transversal services on \textbf{Node 2}.
 This means that in addition to running the search and indexer services, Node 2 also hosts:
 
 \begin{itemize}
@@ -443,33 +616,276 @@ This means that in addition to running the search and indexer services, Node 2 a
     \item The Nginx reverse proxy for load balancing and routing
 \end{itemize}
 
-This configuration ensures that all nodes in the cluster have access to the shared database 
-and can properly route requests through the load balancer, while maintaining the distributed 
+This configuration ensures that all nodes in the cluster have access to the shared database
+and can properly route requests through the load balancer, while maintaining the distributed
 nature of the processing services.
+
+\subsubsection*{Deployment Example: Node 2 Configuration}
+
+In our testing scenario, \textbf{Node 2} was configured to run both its own node-specific services
+and the transversal services. This required executing two separate Docker Compose commands on the
+same machine:
+
+\begin{verbatim}
+# First, start the transversal services (MongoDB and Nginx)
+docker compose -f transversal_services/docker-compose.yaml up -d
+
+# Then, start the Node 2 specific services (Search, Indexer, etc.)
+docker compose -f docker-compose-node2.yaml up -d
+\end{verbatim}
+
+This dual deployment approach on Node 2 provides several advantages:
+
+\begin{itemize}
+    \item \textbf{Centralized Data Access}: All nodes can connect to the MongoDB instance
+    running on Node 2, ensuring consistent data access across the cluster.
+
+    \item \textbf{Load Balancing}: The Nginx reverse proxy on Node 2 can distribute incoming
+    search requests across all available search service instances in the cluster.
+
+    \item \textbf{Resource Optimization}: By consolidating transversal services on a single
+    node, we reduce redundancy and optimize resource utilization across the cluster.
+
+    \item \textbf{Simplified Configuration}: Having a designated node for shared services
+    simplifies the network configuration and service discovery for other nodes.
+\end{itemize}
+
+The \texttt{transversal\_services/docker-compose.yaml} file contains the MongoDB and Nginx
+service definitions, while \texttt{docker-compose-node2.yaml} contains the node-specific
+services (crawler, indexer, search, and ActiveMQ broker).
 
 \section{Testing and Verification}
 
-To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented. This includes unit tests, acceptance tests, and performance benchmarks.
+\begin{infobox}[Quality Assurance Strategy]
+To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented covering unit tests, integration tests, and performance benchmarks.
+\end{infobox}
 
 \subsection{Unit Testing}
-Unit tests were essential for verifying the core logic of individual components in isolation.
-\begin{itemize}
-    \item \textbf{TextTokenizerTest}: Verifies that the book content is correctly split into tokens (terms) for indexing. This is critical for the accuracy of the search engine.
-    \item \textbf{GutenbergHeaderSerializerTest}: Ensures that metadata (title, author, language) is correctly extracted from the raw Project Gutenberg files.
+
+\begin{techbox}[Core Logic Verification]
+Unit tests were essential for verifying the core logic of individual components in isolation:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{TextTokenizerTest}: Verifies that book content is correctly split into tokens (terms) for indexing. This is critical for search engine accuracy.
+
+    \item \textbf{GutenbergHeaderSerializerTest}: Ensures that metadata (title, author, language) is correctly extracted from raw Project Gutenberg files.
 \end{itemize}
+\end{techbox}
 
 \subsection{Integration and Acceptance Testing}
-To guarantee that the microservices interact correctly, acceptance tests were employed.
-\begin{itemize}
+
+\begin{successbox}[End-to-End Validation]
+Acceptance tests guarantee that microservices interact correctly:
+
+\begin{itemize}[leftmargin=*]
     \item \textbf{IndexingApiAcceptanceTest}: Validates the end-to-end functionality of the indexing service, ensuring that books sent to the API are correctly processed and stored.
 \end{itemize}
+\end{successbox}
 
 \subsection{Performance Benchmarking}
+
 Given the "Big Data" nature of the project, performance verification was paramount. We used the \textbf{JMH (Java Microbenchmark Harness)} framework to rigorously test the system's throughput and latency.
-\begin{itemize}
-    \item \textbf{IngestionBenchmarks}: Measured the throughput of the ingestion process, ensuring the system can handle high volumes of book data.
-    \item \textbf{SearchBenchmarks}: Tested the search latency under load, simulating concurrent user queries to verify the responsiveness of the cache and database.
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\rowcolor{successgreen!20}
+\textbf{Benchmark} & \textbf{Purpose} \\
+\hline
+\textbf{IngestionBenchmarks} & Measured the throughput of the ingestion process, ensuring the system can handle high volumes of book data \\
+\hline
+\textbf{SearchBenchmarks} & Tested search latency under load, simulating concurrent user queries to verify the responsiveness of the cache and database \\
+\hline
+\end{tabular}
+\caption{JMH performance benchmarks}
+\end{table}
+
+\subsection{Load Testing with Locust}
+
+\begin{warningbox}[Performance Validation]
+To evaluate the system's performance under realistic user load conditions and measure key metrics such as latency, throughput, and response times, comprehensive load testing using \textbf{Locust} is essential.
+\end{warningbox}
+
+\vspace{0.3cm}
+
+Locust is an open-source load testing tool that allows us to define user behavior with Python code and simulate thousands of concurrent users accessing the system.
+
+\subsubsection{Testing Objectives}
+
+\begin{enumerate}
+    \item \textbf{Latency Measurement}: Determine response time under various load conditions
+    \begin{itemize}
+        \item Average latency
+        \item Median (p50)
+        \item 95th percentile (p95)
+        \item 99th percentile (p99)
+    \end{itemize}
+
+    \item \textbf{Throughput Analysis}: Measure requests per second (RPS) while maintaining acceptable response times
+
+    \item \textbf{Scalability Verification}: Validate horizontal scaling effectiveness across cluster nodes
+
+    \item \textbf{Bottleneck Identification}: Identify performance bottlenecks:
+    \begin{itemize}
+        \item Database query performance
+        \item Cache miss rates
+        \item Network latency between services
+    \end{itemize}
+
+    \item \textbf{Stress Testing}: Determine system breaking point by gradually increasing load
+\end{enumerate}
+
+\subsubsection{Test Scenarios}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{9cm}|}
+\hline
+\rowcolor{warningorange!20}
+\textbf{Scenario} & \textbf{Description} \\
+\hline
+\textbf{Concurrent Queries} & Simulate multiple users performing search queries simultaneously with varying complexity \\
+\hline
+\textbf{Mixed Workloads} & Combine read and write operations to simulate realistic usage patterns \\
+\hline
+\textbf{Sustained Load} & Extended testing periods to detect memory leaks or resource exhaustion \\
+\hline
+\textbf{Spike Testing} & Evaluate system response to sudden traffic increases \\
+\hline
+\end{tabular}
+\caption{Locust load testing scenarios}
+\end{table}
+
+\section{Conclusions and Future Work}
+
+\begin{successbox}[Project Achievement Summary]
+This project successfully demonstrates the design, implementation, and deployment of a production-ready distributed book search platform using modern Big Data technologies and architectural patterns.
+\end{successbox}
+
+\subsection{Technical Achievements}
+
+\subsubsection{Architecture and Design}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{|l|p{10cm}|}
+\hline
+\rowcolor{primaryblue!20}
+\textbf{Achievement} & \textbf{Implementation} \\
+\hline
+\textbf{Microservices Architecture} & Successfully decomposed the system into three independent, scalable services (Crawler, Indexer, Search) \\
+\hline
+\textbf{Event-Driven Design} & Implemented asynchronous communication using ActiveMQ Artemis with message redistribution \\
+\hline
+\textbf{High Availability} & Deployed 3-node ActiveMQ cluster eliminating single points of failure \\
+\hline
+\textbf{Distributed Caching} & Integrated Hazelcast for ultra-low latency ($<$ 1ms) data access \\
+\hline
+\textbf{Persistent Storage} & MongoDB as authoritative data source with durability guarantees \\
+\hline
+\end{tabular}
+\caption{Key architectural achievements}
+\end{table}
+
+\subsubsection{Performance Optimizations}
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Deduplication Mechanism}: Prevents redundant downloads and indexing operations
+    \item \textbf{Cache-First Strategy}: Minimizes database queries for frequently accessed data
+    \item \textbf{Load Balancing}: Nginx distributes requests across multiple service instances
+    \item \textbf{Horizontal Scalability}: Services can scale independently based on demand
 \end{itemize}
+
+\subsection{Deployment and DevOps}
+
+\begin{techbox}[Multi-Architecture Container Strategy]
+The project demonstrates professional DevOps practices:
+
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Multi-Architecture Images}: Built for both AMD64 and ARM64 platforms
+    \item \textbf{Public Registry}: All images published to Docker Hub for easy deployment
+    \item \textbf{Version Control}: Dedicated \texttt{lab} branch for laboratory testing
+    \item \textbf{Infrastructure as Code}: Complete Docker Compose configurations for all nodes
+\end{itemize}
+\end{techbox}
+
+\subsection{Testing and Quality Assurance}
+
+The comprehensive testing strategy ensures system reliability:
+
+\begin{enumerate}
+    \item \textbf{Unit Tests}: Verify core logic components (tokenization, metadata extraction)
+    \item \textbf{Integration Tests}: Validate end-to-end service interactions
+    \item \textbf{Performance Benchmarks}: JMH benchmarks for throughput and latency measurement
+    \item \textbf{Load Testing}: Locust scenarios for realistic user load simulation
+\end{enumerate}
+
+\subsection{Lessons Learned}
+
+\begin{infobox}[Key Insights]
+\textbf{Kubernetes Investigation}: While not required for final deployment, the Kubernetes exploration with \texttt{kind} provided valuable insights into container orchestration, declarative deployments, and production-grade cluster management.
+
+\textbf{Message Broker Configuration}: The \texttt{redistribution-delay=0} setting in ActiveMQ Artemis was crucial for optimal message distribution across cluster nodes.
+
+\textbf{Hybrid Data Strategy}: Combining Hazelcast (speed) with MongoDB (durability) proved essential for balancing performance and data integrity.
+\end{infobox}
+
+\subsection{Future Work and Recommendations}
+
+\begin{warningbox}[Potential Enhancements]
+The following improvements could further enhance the system:
+
+\begin{enumerate}
+    \item \textbf{Kubernetes Production Deployment}: Migrate from Docker Compose to Kubernetes for advanced orchestration features (auto-scaling, self-healing, rolling updates)
+
+    \item \textbf{Observability Stack}: Implement comprehensive monitoring with:
+    \begin{itemize}
+        \item Prometheus for metrics collection
+        \item Grafana for visualization dashboards
+        \item ELK stack for centralized logging
+        \item Distributed tracing with Jaeger
+    \end{itemize}
+
+    \item \textbf{Advanced Search Features}:
+    \begin{itemize}
+        \item Fuzzy search and spell correction
+        \item Relevance ranking algorithms
+        \item Faceted search capabilities
+        \item Search result highlighting
+    \end{itemize}
+
+    \item \textbf{Data Analytics Pipeline}: Integrate Apache Spark for:
+    \begin{itemize}
+        \item Book popularity analysis
+        \item Search pattern analytics
+        \item Recommendation engine
+        \item Usage statistics and reporting
+    \end{itemize}
+
+    \item \textbf{Security Enhancements}:
+    \begin{itemize}
+        \item API authentication and authorization
+        \item TLS/SSL encryption for inter-service communication
+        \item Secrets management with HashiCorp Vault
+        \item Rate limiting and DDoS protection
+    \end{itemize}
+
+    \item \textbf{Disaster Recovery}: Implement backup strategies and cross-region replication
+
+    \item \textbf{CI/CD Pipeline}: Automated testing and deployment with GitHub Actions or Jenkins
+\end{enumerate}
+\end{warningbox}
+
+\subsection{Final Remarks}
+
+\begin{successbox}[Conclusion]
+This project successfully demonstrates the practical application of Big Data technologies and distributed systems principles. The architecture is scalable, fault-tolerant, and production-ready, showcasing modern best practices in microservices design, event-driven architecture, and containerized deployment.
+
+The system handles the complete lifecycle of book data: from discovery and ingestion through Project Gutenberg, to distributed indexing with Hazelcast and MongoDB, to efficient search capabilities with caching optimization. The multi-node cluster deployment with ActiveMQ Artemis ensures high availability and eliminates single points of failure.
+
+The knowledge and experience gained from this project are directly applicable to real-world Big Data systems and provide a solid foundation for future work in distributed computing and large-scale data processing.
+\end{successbox}
 
 \section{References}
 
