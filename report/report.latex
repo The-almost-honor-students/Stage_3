@@ -345,6 +345,23 @@ The \textbf{Crawler Service} implements an intelligent deduplication mechanism t
 \end{itemize}
 \end{successbox}
 
+\subsection{Task Scheduler for Periodic Crawling}
+
+To avoid relying on manual execution of the Crawler service and to keep the datalake continuously up to date, a \textbf{task scheduler} was added to the architecture.
+
+\begin{successbox}[Automated Book Discovery]
+The task scheduler is responsible for periodically triggering new crawling jobs without human intervention. Its main responsibilities are:
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Periodic execution}: automatically enqueue new crawl tasks at configurable intervals (e.g., every few minutes or hours).
+    \item \textbf{Integration with the message broker}: instead of downloading books directly, scheduled tasks publish crawl requests to ActiveMQ Artemis, so that worker instances of the Crawler can process them asynchronously.
+    \item \textbf{Datastore refresh}: ensures that newly available books in Project Gutenberg are gradually discovered and ingested into the datalake and index.
+    \item \textbf{Operational robustness}: reduces the risk of forgetting to execute manual scripts and provides a more realistic, production-like ingestion model.
+\end{itemize}
+\end{successbox}
+
+From the perspective of the rest of the system, the scheduler behaves as another producer of crawl events. This keeps the design loosely coupled: the Crawler service and the downstream Indexer do not need to know whether a request was created manually or by the task scheduler.
+
+
 \section{Background and Investigation Work}
 
 \subsection{Kubernetes: Local Cluster Deployment with kind}
@@ -556,7 +573,7 @@ New versions of the microservice images were built and published to Docker Hub t
 the laboratory deployment. The following images and their versions are now available:
 
 \begin{itemize}
-    \item \textbf{Crawler Service}: \texttt{giselabcr8888/crawler:1.1.0}
+    \item \textbf{Crawler Service}: \texttt{giselabcr8888/crawler:1.2.0}
     \item \textbf{Indexer Service}: \texttt{giselabcr8888/indexer:1.1.0}
     \item \textbf{Search Service}: \texttt{giselabcr8888/search:1.1.0}
 \end{itemize}
