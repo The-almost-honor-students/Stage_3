@@ -82,7 +82,7 @@ public class Main {
         String hazelcastMembers = Optional.ofNullable(dotenv.get("HAZELCAST_MEMBERS"))
                 .orElse(System.getenv("HAZELCAST_MEMBERS"));
         if (hazelcastMembers == null)
-            hazelcastMembers = "10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701";
+            hazelcastMembers = "10.26.14.221:5701,10.26.14.222:5701,10.26.14.223:5701";
         String nodeIp = Optional.ofNullable(dotenv.get("NODE_IP"))
                 .orElse(System.getenv("NODE_IP"));
         return new AppConfig(
