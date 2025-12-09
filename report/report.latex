@@ -447,6 +447,40 @@ This configuration ensures that all nodes in the cluster have access to the shar
 and can properly route requests through the load balancer, while maintaining the distributed 
 nature of the processing services.
 
+\subsubsection*{Deployment Example: Node 2 Configuration}
+
+In our testing scenario, \textbf{Node 2} was configured to run both its own node-specific services 
+and the transversal services. This required executing two separate Docker Compose commands on the 
+same machine:
+
+\begin{verbatim}
+# First, start the transversal services (MongoDB and Nginx)
+docker compose -f transversal_services/docker-compose.yaml up -d
+
+# Then, start the Node 2 specific services (Search, Indexer, etc.)
+docker compose -f docker-compose-node2.yaml up -d
+\end{verbatim}
+
+This dual deployment approach on Node 2 provides several advantages:
+
+\begin{itemize}
+    \item \textbf{Centralized Data Access}: All nodes can connect to the MongoDB instance 
+    running on Node 2, ensuring consistent data access across the cluster.
+    
+    \item \textbf{Load Balancing}: The Nginx reverse proxy on Node 2 can distribute incoming 
+    search requests across all available search service instances in the cluster.
+    
+    \item \textbf{Resource Optimization}: By consolidating transversal services on a single 
+    node, we reduce redundancy and optimize resource utilization across the cluster.
+    
+    \item \textbf{Simplified Configuration}: Having a designated node for shared services 
+    simplifies the network configuration and service discovery for other nodes.
+\end{itemize}
+
+The \texttt{transversal\_services/docker-compose.yaml} file contains the MongoDB and Nginx 
+service definitions, while \texttt{docker-compose-node2.yaml} contains the node-specific 
+services (crawler, indexer, search, and ActiveMQ broker).
+
 \section{Testing and Verification}
 
 To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented. This includes unit tests, acceptance tests, and performance benchmarks.
