@@ -91,10 +91,10 @@ Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
 
 
 # Remote Node Details (Replace these with the actual IDs you captured)
-$IpNode2 = "192.168.1.135"
+$IpNode2 = "10.26.14.222"
 $IdNode2 = Get-NodeID -Ip $IpNode2 -ApiKey $ApiKey
 
-$IpNode3 = "192.168.1.143"
+$IpNode3 = "10.26.14.223"
 $IdNode3 = Get-NodeID -Ip $IpNode3 -ApiKey $ApiKey
 
 # --- STEP 1: ADD REMOTE DEVICES ---
