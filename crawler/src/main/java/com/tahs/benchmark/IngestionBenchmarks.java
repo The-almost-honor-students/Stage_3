@@ -46,9 +46,6 @@ public class IngestionBenchmarks {
     @Param({ "70000" })
     public int totalBooks;
 
-    @Param({ "10" })
-    public int maxRetries;
-
     private IngestionService ingestion;
     private List<Integer> candidates;
     private AtomicInteger rr;
@@ -72,7 +69,7 @@ public class IngestionBenchmarks {
             }
         };
 
-        ingestion = new IngestionService(repo, noOpPublisher, Paths.get(stagingDir), totalBooks, maxRetries, appConfig);
+        ingestion = new IngestionService(repo, noOpPublisher, Paths.get(stagingDir), totalBooks, appConfig);
         candidates = parseIds(bookIds);
         ensureDirs();
         purgeStaging();
@@ -87,8 +84,8 @@ public class IngestionBenchmarks {
         return new AppConfig(
                 urlGutenberg,
                 port,
-                "vm://localhost?broker.persistent=false" // Dummy broker URL
-        );
+                "vm://localhost?broker.persistent=false", // Dummy broker URL
+                30);
     }
 
     @TearDown(Level.Iteration)

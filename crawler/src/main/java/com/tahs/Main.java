@@ -20,7 +20,7 @@ public class Main {
         private static final String STAGING_PATH = "staging/downloads";
         private static final String DATALAKE_PATH = "datalake";
         private static final int TOTAL_BOOKS = 70000;
-        private static final int MAX_RETRIES = 10;
+
         private static final int PORT = 7070;
 
         private static IngestionService ingestionService;
@@ -48,13 +48,16 @@ public class Main {
 
                 ingestionService = new IngestionService(datalakeRepo, eventPublisher, Paths.get(STAGING_PATH),
                                 TOTAL_BOOKS,
-                                MAX_RETRIES, appConfig);
-
+                                appConfig);
                 Javalin app = Javalin.create(cfg -> cfg.http.defaultContentType = "application/json").start(PORT);
 
                 app.post("/ingest/{book_id}", Main::downloadBook);
                 app.get("/ingest/status/{book_id}", Main::checkStatus);
                 app.get("/ingest/list", Main::listBooks);
+
+                var scheduler = new com.tahs.infrastructure.scheduler.BookDownloadScheduler(ingestionService,
+                                appConfig);
+                scheduler.start();
 
                 System.out.println("[API] Ingestion API running on http://localhost:" + PORT + "/");
         }
@@ -130,10 +133,15 @@ public class Main {
                 if (activeMqUrl == null)
                         activeMqUrl = "tcp://localhost:61616";
 
+                String intervalStr = Optional.ofNullable(dotenv.get("DOWNLOAD_INTERVAL_SECONDS"))
+                                .orElse(System.getenv("DOWNLOAD_INTERVAL_SECONDS"));
+                int interval = intervalStr != null ? Integer.parseInt(intervalStr) : 30;
+
                 return new AppConfig(
                                 urlGutenberg,
                                 port,
-                                activeMqUrl);
+                                activeMqUrl,
+                                interval);
         }
 
 }
