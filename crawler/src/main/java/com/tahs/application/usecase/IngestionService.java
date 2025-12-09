@@ -12,7 +12,7 @@ import java.nio.file.*;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
-import java.util.Set;
+
 import java.util.regex.Pattern;
 
 public class IngestionService {
@@ -24,7 +24,7 @@ public class IngestionService {
     private final EventPublisher eventPublisher;
     private final Path stagingDir;
     private final int totalBooks;
-    private final int maxRetries;
+
     private final AppConfig appConfig;
     private final Random rng = new Random();
 
@@ -32,13 +32,11 @@ public class IngestionService {
             EventPublisher eventPublisher,
             Path stagingDir,
             int totalBooks,
-            int maxRetries,
             AppConfig appConfig) {
         this.datalakeRepo = datalakeRepo;
         this.eventPublisher = eventPublisher;
         this.stagingDir = stagingDir.toAbsolutePath().normalize();
         this.totalBooks = totalBooks;
-        this.maxRetries = maxRetries;
         this.appConfig = appConfig;
     }
 
@@ -104,15 +102,8 @@ public class IngestionService {
         return moveToDatalake(bookId, ts);
     }
 
-    public boolean ingestNextRandom(Set<Integer> alreadyDownloaded, LocalDateTime ts) {
-        for (int i = 0; i < maxRetries; i++) {
-            int candidate = rng.nextInt(totalBooks) + 1;
-            if (alreadyDownloaded.contains(candidate))
-                continue;
-            if (ingestOne(candidate, ts))
-                return true;
-        }
-        return false;
+    public Integer ingestNextRandom(LocalDateTime ts) {
+        return rng.nextInt(totalBooks) + 1;
     }
 
     public boolean existsInDatalake(int bookId) {

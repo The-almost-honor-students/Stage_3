@@ -15,7 +15,7 @@ services:
       - ./broker/node2:/var/lib/artemis-instance/etc-override
 
   crawler:
-    image: giselabcr8888/crawler:1.1.0
+    image: giselabcr8888/crawler:1.2.0
     container_name: crawler
     ports:
       - "7070:7070"
