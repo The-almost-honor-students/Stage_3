@@ -48,8 +48,7 @@ services:
       - "7070:7070"
     environment:
       - MONGO_URL=mongodb://mongodb_books:27017
-      - ACTIVEMQ_URL=failover:(tcp://192.168.1.133:61616,tcp://192.168.1.135:61616,tcp://192.168.1.143:61616)
-      # - ACTIVEMQ_URL=failover:(tcp://10.26.14.223:61616,tcp://10.26.14.222:61616,tcp://10.26.14.221:61616)
+      - ACTIVEMQ_URL=failover:(tcp://10.26.14.221:61616,tcp://10.26.14.222:61616,tcp://10.26.14.223:61616)
     depends_on:
       - mongo
       - activemq
@@ -63,15 +62,13 @@ services:
     image: giselabcr8888/indexer:1.1.0
     container_name: indexer
     environment:
-      - NODE_IP=192.168.1.133
+      - NODE_IP=10.26.14.221
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
-      - MONGO_URL=mongodb://192.168.1.135:27017
+      - MONGO_URL=mongodb://10.26.14.222:27017
       - ACTIVEMQ_USERNAME=clusterUser
       - ACTIVEMQ_PASSWORD=secret123
-      - ACTIVEMQ_URL=tcp://192.168.1.133:61616
-      # - ACTIVEMQ_URL=tcp://10.26.14.221:61616
-      - HAZELCAST_MEMBERS=192.168.1.133:5701,192.168.1.135:5701,192.168.1.143:5701
-      # - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
+      - ACTIVEMQ_URL=tcp://10.26.14.221:61616
+      - HAZELCAST_MEMBERS=10.26.14.221:5701,10.26.14.222:5701,10.26.14.223:5701
     ports:
       - "8080:8080"
       - "5701:5701"
@@ -88,14 +85,13 @@ services:
     image: giselabcr8888/search:1.1.0
     container_name: search
     environment:
-      - NODE_IP=192.168.1.133
+      - NODE_IP=10.26.14.221
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
       - MONGO_URL=mongodb://mongodb_books:27017
       - DATABASE_NAME=books
       - COLLECTION_METADATA=metadata
       - COLLECTION_INDEX=inverted_index
-      - HAZELCAST_MEMBERS=192.168.1.133:5701,192.168.1.135:5701,192.168.1.143:5701
-      # - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
+      - HAZELCAST_MEMBERS=10.26.14.221:5701,10.26.14.222:5701,10.26.14.223:5701
     ports:
       - "9090:9090"
       - "5702:5701"
