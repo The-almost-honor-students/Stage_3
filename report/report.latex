@@ -471,6 +471,35 @@ Given the "Big Data" nature of the project, performance verification was paramou
     \item \textbf{SearchBenchmarks}: Tested the search latency under load, simulating concurrent user queries to verify the responsiveness of the cache and database.
 \end{itemize}
 
+\subsection{Load Testing with Locust}
+
+To evaluate the system's performance under realistic user load conditions and measure key metrics such as latency, throughput, and response times, the code must be subjected to comprehensive load testing using \textbf{Locust}.
+
+Locust is an open-source load testing tool that allows us to define user behavior with Python code and simulate thousands of concurrent users accessing the system. This type of testing is crucial for:
+
+\begin{itemize}
+    \item \textbf{Latency Measurement}: Determining the response time of the search service under various load conditions, including average, median (p50), 95th percentile (p95), and 99th percentile (p99) latencies.
+    
+    \item \textbf{Throughput Analysis}: Measuring the number of requests per second (RPS) that the system can handle while maintaining acceptable response times.
+    
+    \item \textbf{Scalability Verification}: Validating that the distributed architecture effectively scales horizontally as load increases across the cluster nodes.
+    
+    \item \textbf{Bottleneck Identification}: Identifying potential performance bottlenecks in the system, such as database queries, cache misses, or network latency between services.
+    
+    \item \textbf{Stress Testing}: Determining the breaking point of the system by gradually increasing the load until performance degrades or failures occur.
+\end{itemize}
+
+The Locust tests should simulate realistic user scenarios, including:
+
+\begin{itemize}
+    \item Concurrent search queries with varying complexity
+    \item Mixed workloads combining read and write operations
+    \item Sustained load over extended periods to detect memory leaks or resource exhaustion
+    \item Spike testing to evaluate how the system handles sudden traffic increases
+\end{itemize}
+
+By analyzing the metrics collected from Locust, we can validate that the distributed architecture meets the performance requirements and can handle the expected production workload efficiently.
+
 \section{References}
 
 \begin{enumerate}
