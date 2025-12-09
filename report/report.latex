@@ -359,6 +359,94 @@ docker buildx build \
     \item Provides a single, validated, publicly available image source for deployment.
 \end{itemize}
 
+\section{Laboratory Deployment Configuration}
+
+\subsection{Docker Compose Files for Multi-Node Deployment}
+
+To facilitate the deployment and testing of the distributed system in the laboratory environment, 
+three separate Docker Compose configuration files were created, one for each node in the cluster:
+
+\begin{itemize}
+    \item \texttt{docker-compose-node1.yaml}
+    \item \texttt{docker-compose-node2.yaml}
+    \item \texttt{docker-compose-node3.yaml}
+\end{itemize}
+
+Each file is specifically configured for its corresponding node, with appropriate IP addresses, 
+service configurations, and network settings tailored to the laboratory infrastructure.
+
+\subsection{Deployment Commands}
+
+To execute and start the services on each node, the following commands must be run on the 
+respective machines:
+
+\begin{verbatim}
+# On Node 1
+docker compose -f docker-compose-node1.yaml up -d
+
+# On Node 2
+docker compose -f docker-compose-node2.yaml up -d
+
+# On Node 3
+docker compose -f docker-compose-node3.yaml up -d
+\end{verbatim}
+
+The \texttt{-d} flag ensures that the containers run in detached mode, allowing them to 
+operate in the background.
+
+\subsection{Updated Docker Images}
+
+New versions of the microservice images were built and published to Docker Hub to support 
+the laboratory deployment. The following images and their versions are now available:
+
+\begin{itemize}
+    \item \textbf{Crawler Service}: \texttt{giselabcr8888/crawler:1.1.0}
+    \item \textbf{Indexer Service}: \texttt{giselabcr8888/indexer:1.1.0}
+    \item \textbf{Search Service}: \texttt{giselabcr8888/search:1.1.0}
+\end{itemize}
+
+These images incorporate all the necessary configurations and optimizations for distributed 
+execution in the cluster environment, including proper Hazelcast client configuration, 
+ActiveMQ cluster connectivity, and MongoDB integration.
+
+\subsection{GitHub Laboratory Branch}
+
+A dedicated branch named \textbf{lab} was created in the GitHub repository specifically for 
+laboratory testing and deployment. This branch contains all the configurations, scripts, and 
+documentation required to successfully deploy and test the system in the laboratory environment.
+
+The branch can be accessed at:
+
+\begin{center}
+\texttt{https://github.com/The-almost-honor-students/Stage\_3/tree/lab}
+\end{center}
+
+\subsection{Transversal Services Architecture}
+
+\textbf{Transversal services} are those common components that are shared across the cluster 
+and must be available to all nodes. In our architecture, these include:
+
+\begin{itemize}
+    \item \textbf{MongoDB}: The persistent data storage layer
+    \item \textbf{Nginx}: The reverse proxy and load balancer (when applicable)
+\end{itemize}
+
+In addition to the Docker Compose file for each node's specific services, the transversal 
+services (MongoDB and Nginx) are also deployed on designated machines to ensure availability 
+and proper data persistence.
+
+For our laboratory testing configuration, we deployed the transversal services on \textbf{Node 2}. 
+This means that in addition to running the search and indexer services, Node 2 also hosts:
+
+\begin{itemize}
+    \item The MongoDB instance that serves as the central database
+    \item The Nginx reverse proxy for load balancing and routing
+\end{itemize}
+
+This configuration ensures that all nodes in the cluster have access to the shared database 
+and can properly route requests through the load balancer, while maintaining the distributed 
+nature of the processing services.
+
 \section{Testing and Verification}
 
 To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented. This includes unit tests, acceptance tests, and performance benchmarks.
