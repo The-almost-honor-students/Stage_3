@@ -569,7 +569,7 @@ operate in the background.
 
 \subsection{Updated Docker Images}
 
-New versions of the microservice images were built and published to Docker Hub to support 
+New versions of the microservice images were built and published to Docker Hub \href{https://hub.docker.com/repositories/giselabcr8888}{(https://hub.docker.com/repositories/giselabcr8888)} to support
 the laboratory deployment. The following images and their versions are now available:
 
 \begin{itemize}
