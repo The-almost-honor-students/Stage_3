@@ -87,7 +87,7 @@ services:
     environment:
       - NODE_IP=10.26.14.221
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
-      - MONGO_URL=mongodb://mongodb_books:27017
+      - MONGO_URL=mongodb://10.26.14.222:27017
       - DATABASE_NAME=books
       - COLLECTION_METADATA=metadata
       - COLLECTION_INDEX=inverted_index
