@@ -20,13 +20,10 @@ services:
     ports:
       - "7070:7070"
     environment:
-      - MONGO_URL=mongodb://mongodb_books:27017
       - ACTIVEMQ_URL=failover:(tcp://10.26.14.221:61616,tcp://10.26.14.222:61616,tcp://10.26.14.223:61616)
     depends_on:
-      - mongo
       - activemq
     networks:
-      - mongo-net
       - engine-net
     volumes:
       - engine-volume:/app
@@ -37,7 +34,7 @@ services:
     environment:
       - NODE_IP=10.26.14.222
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
-      - MONGO_URL=mongodb://mongodb_books:27017
+      - MONGO_URL=mongodb://10.26.14.222:27017
       - ACTIVEMQ_USERNAME=clusterUser
       - ACTIVEMQ_PASSWORD=secret123
       - ACTIVEMQ_URL=tcp://10.26.14.222:61616
@@ -46,10 +43,8 @@ services:
       - "8080:8080"
       - "5701:5701"
     depends_on:
-      - mongo
       - activemq
     networks:
-      - mongo-net
       - engine-net
     volumes:
       - engine-volume:/app
@@ -69,7 +64,6 @@ services:
       - "9090:9090"
       - "5702:5701"
     depends_on:
-      - mongo
       - activemq
     networks:
       - mongo-net
@@ -98,8 +92,6 @@ services:
     restart: unless-stopped
 
 networks:
-  mongo-net:
-    driver: bridge
   engine-net:
     driver: bridge
 

@@ -1,33 +1,6 @@
 version: "3.8"
 
 services:
-  mongo:
-    image: mongo:latest
-    container_name: mongodb_books
-    environment:
-      - MONGO_INITDB_DATABASE=books
-    ports:
-      - "27017:27017"
-    volumes:
-      - ./mongo_data:/data/db
-    networks:
-      - mongo-net
-
-  mongo-express:
-    image: mongo-express:latest
-    container_name: mongo_express
-    environment:
-      - ME_CONFIG_MONGODB_SERVER=mongodb_books
-      - ME_CONFIG_MONGODB_ENABLE_ADMIN=true
-      - ME_CONFIG_BASICAUTH_USERNAME=admin
-      - ME_CONFIG_BASICAUTH_PASSWORD=admin
-    ports:
-      - "8081:8081"
-    depends_on:
-      - mongo
-    networks:
-      - mongo-net
-
   activemq:
     image: apache/activemq-artemis:latest
     container_name: artemis_broker
@@ -47,13 +20,10 @@ services:
     ports:
       - "7070:7070"
     environment:
-      - MONGO_URL=mongodb://mongodb_books:27017
       - ACTIVEMQ_URL=failover:(tcp://10.26.14.221:61616,tcp://10.26.14.222:61616,tcp://10.26.14.223:61616)
     depends_on:
-      - mongo
       - activemq
     networks:
-      - mongo-net
       - engine-net
     volumes:
       - engine-volume:/app
@@ -73,10 +43,8 @@ services:
       - "8080:8080"
       - "5701:5701"
     depends_on:
-      - mongo
       - activemq
     networks:
-      - mongo-net
       - engine-net
     volumes:
       - engine-volume:/app
@@ -87,7 +55,7 @@ services:
     environment:
       - NODE_IP=10.26.14.221
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
-      - MONGO_URL=mongodb://mongodb_books:27017
+      - MONGO_URL=mongodb://10.26.14.222:27017
       - DATABASE_NAME=books
       - COLLECTION_METADATA=metadata
       - COLLECTION_INDEX=inverted_index
@@ -96,10 +64,8 @@ services:
       - "9090:9090"
       - "5702:5701"
     depends_on:
-      - mongo
       - activemq
     networks:
-      - mongo-net
       - engine-net
     volumes:
       - engine-volume:/app/data
@@ -125,8 +91,6 @@ services:
     restart: unless-stopped
 
 networks:
-  mongo-net:
-    driver: bridge
   engine-net:
     driver: bridge
 
