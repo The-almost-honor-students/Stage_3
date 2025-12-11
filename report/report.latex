@@ -686,7 +686,7 @@ services (crawler, indexer, search, and ActiveMQ broker).
 \section{Testing and Verification}
 
 \begin{infobox}[Quality Assurance Strategy]
-To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented covering unit tests, integration tests, and performance benchmarks.
+To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented covering unit tests, integration tests.
 \end{infobox}
 
 \subsection{Unit Testing}
@@ -869,7 +869,6 @@ The comprehensive testing strategy ensures system reliability:
 \begin{enumerate}
     \item \textbf{Unit Tests}: Verify core logic components (tokenization, metadata extraction)
     \item \textbf{Integration Tests}: Validate end-to-end service interactions
-    \item \textbf{Performance Benchmarks}: JMH benchmarks for throughput and latency measurement
     \item \textbf{Load Testing}: Locust scenarios for realistic user load simulation
 \end{enumerate}
 
