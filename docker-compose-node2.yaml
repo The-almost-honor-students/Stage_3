@@ -50,7 +50,7 @@ services:
       - engine-volume:/app
 
   search:
-    image: giselabcr8888/search:1.1.0
+    image: giselabcr8888/search:1.2.0
     container_name: search
     environment:
       - NODE_IP=10.26.14.222
