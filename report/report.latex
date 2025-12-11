@@ -261,7 +261,6 @@ To optimize performance without sacrificing data integrity, we implemented a hyb
 \centering
 \begin{tabular}{|l|p{5cm}|p{5cm}|}
 \hline
-\rowcolor{lightblue}
 \textbf{Component} & \textbf{Role} & \textbf{Key Features} \\
 \hline
 \textbf{Hazelcast} & Distributed In-Memory Cache &
@@ -298,7 +297,6 @@ The system relies on three main microservices, all containerized and orchestrate
 \centering
 \begin{tabular}{|l|p{4.5cm}|p{6cm}|}
 \hline
-\rowcolor{primaryblue!20}
 \textbf{Service} & \textbf{Primary Responsibility} & \textbf{Key Features} \\
 \hline
 \textbf{Crawler} & Book Discovery \& Download &
@@ -328,6 +326,24 @@ The system relies on three main microservices, all containerized and orchestrate
 \end{tabular}
 \caption{Microservices architecture components}
 \end{table}
+
+\subsubsection{High Availability and Distributed Service Deployment}
+
+The core microservices (\textbf{Crawler}, \textbf{Indexer}, and \textbf{Search}) are deployed across all three cluster nodes. This strategy ensures the system is inherently \textbf{highly available} and \textbf{distributed}.
+
+\begin{techbox}[Service Replication Strategy]
+\textbf{Goal}: Achieve redundancy and load distribution across the cluster.
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Deployment Model}: Each node (\texttt{Node 1}, \texttt{Node 2}, \texttt{Node 3}) runs instances of the \texttt{Crawler}, \texttt{Indexer}, and \texttt{Search} services.
+    \item \textbf{High Availability (HA)}: In the event of a machine failure (e.g., \texttt{Node 1} goes down), the processing load is instantly taken over by the redundant services running on the remaining operational machines (\texttt{Node 2} and \texttt{Node 3}).
+    \item \textbf{Load Distribution}:
+    \begin{itemize}
+        \item \textbf{Search Service}: Incoming requests are distributed by the Nginx Load Balancer (running on \texttt{Node 2}) across all available instances of the \texttt{Search} service in the cluster.
+        \item \textbf{Crawler/Indexer Services}: These services consume events from the ActiveMQ Artemis cluster, whose message redistribution mechanism ensures that messages are processed efficiently by any available worker instance across the three nodes.
+    \end{itemize}
+\end{itemize}
+This architecture ensures that the failure of a single physical machine does not result in a system outage, fulfilling the key objective of fault tolerance through redundancy.
+\end{techbox}
 
 \subsection{Deduplication Mechanism}
 
@@ -910,6 +926,171 @@ The system handles the complete lifecycle of book data: from discovery and inges
 
 The knowledge and experience gained from this project are directly applicable to real-world Big Data systems and provide a solid foundation for future work in distributed computing and large-scale data processing.
 \end{successbox}
+
+
+\section{Laboratory Procedure Guide: Distributed Deployment and Testing}
+
+\begin{infobox}[Cluster Node Configuration]
+The distributed system is deployed across three laboratory nodes. The final digit of the IP determines the node number.
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Node} & \textbf{IP Address} & \textbf{Role} \\
+\hline
+\textbf{Node 1} & \texttt{10.26.14.221} & Microservices \\
+\hline
+\textbf{Node 2} & \texttt{10.26.14.222} & Microservices + Transversal (MongoDB, Nginx) \\
+\hline
+\textbf{Node 3} & \texttt{10.26.14.223} & Microservices \\
+\hline
+\end{tabular}
+\end{center}
+\end{infobox}
+
+
+
+\subsection{Environment Setup}
+
+\subsubsection{Python Environment Preparation for Load Testing}
+Before executing Locust, a Python virtual environment must be configured and necessary dependencies activated. This is only required on the machine designated for running Locust (typically one of the nodes or a client).
+
+\begin{enumerate}
+    \item Create the virtual environment:
+    \begin{lstlisting}
+python3 -m venv Stage_3
+    \end{lstlisting}
+    \item Activate the virtual environment:
+    \begin{lstlisting}
+source Stage_3/bin/activate
+    \end{lstlisting}
+    \item Install Locust and dependencies:
+    \begin{lstlisting}
+pip install locust
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Service Deployment}
+
+\subsubsection{Node-Specific Services Deployment}
+On each of the three cluster nodes, execute the \texttt{docker compose} command to deploy the microservices specific to that node (\texttt{crawler}, \texttt{indexer}, \texttt{search}, ActiveMQ).
+
+\begin{itemize}
+    \item \textbf{On Node 1 (\texttt{10.26.14.221}):}
+    \begin{lstlisting}
+docker compose -f docker-compose-node1.yaml up -d
+    \end{lstlisting}
+    \item \textbf{On Node 2 (\texttt{10.26.14.222}):}
+    \begin{lstlisting}
+docker compose -f docker-compose-node2.yaml up -d
+    \end{lstlisting}
+    \item \textbf{On Node 3 (\texttt{10.26.14.223}):}
+    \begin{lstlisting}
+docker compose -f docker-compose-node3.yaml up -d
+    \end{lstlisting}
+\end{itemize}
+
+\subsubsection{Transversal Services Deployment (Node 2 Only)}
+The shared infrastructure services (\textbf{MongoDB} and the \textbf{Nginx Load Balancer}) are implemented centrally on Node 2.
+
+\begin{enumerate}
+    \item Navigate to the transversal services directory:
+    \begin{lstlisting}
+cd transversal_services
+    \end{lstlisting}
+    \item Execute the deployment of \texttt{mongodb} and \texttt{nginx}:
+    \begin{lstlisting}
+docker compose up -d
+    \end{lstlisting}
+\end{enumerate}
+At this point, all microservices and transversal services should be deployed and running across the cluster.
+
+\subsection{Datalake Configuration and Synchronization}
+
+\subsubsection{Execution Policy Configuration (Windows/PowerShell)}
+Before executing the configuration script, the PowerShell execution policy must be modified to allow the running of local scripts.
+
+\begin{lstlisting}
+Set-ExecutionPolicy RemoteSigned -Scope Process
+\end{lstlisting}
+
+\subsubsection{Execution of the Synchronization Script}
+Execute the \texttt{configure\_sizing.ps1} script to prepare the data volumes and ensure the *datalake* (the shared book folder) is correctly configured and visible to all nodes for replication purposes.
+
+\begin{lstlisting}
+./configure_sizing.ps1
+\end{lstlisting}
+
+\subsubsection{Accepting Datalake Connections}
+Ensure that the network or *firewall* configurations on all three machines allow the necessary connections for sharing the *datalake* folder, so that all containers can access the books and cluster members (Hazelcast and ActiveMQ) can communicate effectively.
+
+\subsection{System Verification and Monitoring}
+
+After deploying and configuring the services, their correct operation is verified by reviewing the container logs.
+
+\begin{enumerate}
+    \item \textbf{Verify Crawler Logs:}
+    \begin{lstlisting}
+docker logs <crawler_container_id> -f
+    \end{lstlisting}
+    \item \textbf{Verify Indexer Logs:}
+    \begin{lstlisting}
+docker logs <indexer_container_id> -f
+    \end{lstlisting}
+    \item \textbf{Verify Search Service Logs:}
+    \begin{lstlisting}
+docker logs <search_container_id> -f
+    \end{lstlisting}
+    \item \textbf{Verify MongoDB Express:} Access the MongoDB Express interface to verify the persistence of metadata and the index.
+\end{enumerate}
+
+\subsection{Load Testing with Locust}
+
+To evaluate the cluster's performance under stress, Locust is used to simulate high concurrency directed at the Nginx load balancer.
+
+\begin{enumerate}
+    \item Navigate to the load-testing folder:
+    \begin{lstlisting}
+cd load-testing
+    \end{lstlisting}
+    \item Run Locust:
+    \begin{lstlisting}
+locust -f locustfile.py
+    \end{lstlisting}
+    \item Access the Locust web interface on port \texttt{8089} of the host machine (e.g., \texttt{http://localhost:8089}).
+    \item Configure and run the load test:
+    \begin{itemize}
+        \item \textbf{Number of Users:} $\mathbf{500}$ or more (to stress the system).
+        \item \textbf{Host:} $\texttt{http://localhost:8000/search}$ (the Nginx endpoint).
+    \end{itemize}
+    \item Monitor key metrics such as Requests/s and the $\mathbf{95^{th}}$ Percentile (\textbf{P95}) latency.
+\end{enumerate}
+
+\subsection{Functional Search Service Test}
+
+Perform a manual search test using a browser or a tool like \texttt{curl} or Postman, directed at the Nginx load balancer.
+
+\begin{lstlisting}
+curl http://localhost:8000/search?q=Love
+\end{lstlisting}
+Verify that the response is correct and originated from one of the *Search Services* in the cluster.
+
+\subsection{Fault Tolerance Test (Failover)}
+
+To verify the High Availability and fault tolerance of the distributed system:
+
+\begin{enumerate}
+    \item Select a node (e.g., Node 1) and stop its microservice containers:
+    \begin{lstlisting}
+# On Node 1 machine
+docker compose -f docker-compose-node1.yaml stop
+    \end{lstlisting}
+    \item \textbf{Verification:}
+    \begin{itemize}
+        \item Observe the logs of the remaining nodes (Node 2 and 3) to confirm the ActiveMQ and Hazelcast reconnections.
+        \item Repeat the functional search test (\texttt{/search?q=Love}) to confirm that the system remains operational without interruptions, with traffic successfully being redirected to the remaining nodes.
+    \end{itemize}
+\end{enumerate}
 
 \section{References}
 
