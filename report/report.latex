@@ -397,7 +397,7 @@ From the perspective of the rest of the system, the scheduler behaves as another
 \subsection{Kubernetes: Local Cluster Deployment with kind}
 
 As part of the investigation, Kubernetes was studied using the official kind documentation [1], and the internal architecture of Kubernetes was analyzed through the official project documentation [2].
-A significant effort was dedicated to understanding and configuring Kubernetes using \texttt{kind} (Kubernetes IN Docker) [1]. Although Kubernetes was not required for the final deployment of the microservices, it was intentionally explored due to its relevance in large-scale distributed architectures.
+A significant effort was dedicated to understand and configure Kubernetes using \texttt{kind} (Kubernetes IN Docker) [1]. Although Kubernetes was not required for the final deployment of the microservices, it was intentionally explored due to its relevance in large-scale distributed architectures.
 
 This research complements the main system development by offering insights into how the ingestion, indexing, and search services could operate inside a realistic distributed environment. Kubernetes provides features such as declarative deployments, load balancing, automatic recovery, and namespace isolation.
 
@@ -408,7 +408,7 @@ Docker provides lightweight containers, but Kubernetes extends these capabilitie
 \begin{itemize}
     \item Automated Pod recovery.
     \item Declarative configuration with YAML.
-    \item Load balancing with Services.
+    \item Load balancing.
     \item Autoscaling capabilities.
     \item Namespaces for isolation.
     \item Multi-node cluster simulation with \texttt{kind}.
