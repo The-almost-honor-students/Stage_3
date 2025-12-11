@@ -1027,14 +1027,14 @@ Set-ExecutionPolicy RemoteSigned -Scope Process
 \end{lstlisting}
 
 \subsubsection{Execution of the Synchronization Script}
-Execute the \texttt{configure\_sizing.ps1} script to prepare the data volumes and ensure the *datalake* (the shared book folder) is correctly configured and visible to all nodes for replication purposes.
+Execute the \texttt{configure\_sizing.ps1} script to prepare the data volumes and ensure the datalake (the shared book folder) is correctly configured and visible to all nodes for replication purposes.
 
 \begin{lstlisting}
 ./configure_sizing.ps1
 \end{lstlisting}
 
 \subsubsection{Accepting Datalake Connections}
-Ensure that the network or *firewall* configurations on all three machines allow the necessary connections for sharing the *datalake* folder, so that all containers can access the books and cluster members (Hazelcast and ActiveMQ) can communicate effectively.
+Ensure that the network or firewall configurations on all three machines allow the necessary connections for sharing the datalake folder, so that all containers can access the books and cluster members (Hazelcast and ActiveMQ) can communicate effectively.
 
 \subsection{System Verification and Monitoring}
 
@@ -1085,7 +1085,7 @@ Perform a manual search test using a browser or a tool like \texttt{curl} or Pos
 \begin{lstlisting}
 curl http://localhost:8000/search?q=Love
 \end{lstlisting}
-Verify that the response is correct and originated from one of the *Search Services* in the cluster.
+Verify that the response is correct and originated from one of the Search Services in the cluster.
 
 \subsection{Fault Tolerance Test (Failover)}
 
