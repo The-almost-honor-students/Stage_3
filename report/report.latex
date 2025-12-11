@@ -137,7 +137,12 @@
 % ================== PORTADA ==================
 \begin{titlepage}
     \centering
-    \vspace*{1.5cm}
+    \vspace*{1cm}
+
+    % Imagen de la Escuela
+    \includegraphics[width=0.6\textwidth]{eii-acron-mod.png}
+
+    \vspace{1cm}
 
     {\LARGE \textbf{Stage 3: Building a Cluster Architecture}\par}
     \vspace{0.6cm}
@@ -146,13 +151,13 @@
     \vspace{0.4cm}
 
     {\large \textbf{Big Data -- Stage 3 (2025)}\par}
-    \vspace{2.2cm}
+    \vspace{1cm}
 
     {\large \textbf{Bachelor’s Degree in Data Science and Engineering}\par}
     \vspace{0.3cm}
 
     {\large \textbf{University of Las Palmas de Gran Canaria}\par}
-    \vspace{2.0cm}
+    \vspace{1.5cm}
 
     {\large \textbf{Academic Year:} Third Year, First Semester\par}
     \vspace{0.8cm}
@@ -163,13 +168,20 @@
     \begin{center}
         {\large
         Gisela Belmonte Cruz\\[0.2cm]
-        Nerea Valido Calzada\\[0.2cm]
+        Nerea Valzada Calzada\\[0.2cm]
         Kaarlo Caballero Nillukka\\[0.2cm]
         Ancor González Hernández\\[0.2cm]
         }
     \end{center}
 
     \vfill
+    \vspace{0.2cm}
+
+    {\large \textbf{Project Video (YouTube):}\par} % Nuevo Título
+    \vspace{0.2cm}
+    {\large \url{<link>}\par} % Nuevo Enlace
+
+    \vspace{0.3cm}
 
     {\large \textbf{GitHub Repository:}\par}
     \vspace{0.2cm}
@@ -533,7 +545,6 @@ All images were published publicly to Docker Hub under the account \textbf{gisel
 \centering
 \begin{tabular}{|l|p{10cm}|}
 \hline
-\rowcolor{successgreen!20}
 \textbf{Benefit} & \textbf{Description} \\
 \hline
 \textbf{Reproducibility} & Ensures consistent behavior across all laboratory environments \\
