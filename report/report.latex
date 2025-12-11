@@ -682,25 +682,6 @@ Acceptance tests guarantee that microservices interact correctly:
 \end{itemize}
 \end{successbox}
 
-\subsection{Performance Benchmarking}
-
-Given the "Big Data" nature of the project, performance verification was paramount. We used the \textbf{JMH (Java Microbenchmark Harness)} framework to rigorously test the system's throughput and latency.
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|p{10cm}|}
-\hline
-\rowcolor{successgreen!20}
-\textbf{Benchmark} & \textbf{Purpose} \\
-\hline
-\textbf{IngestionBenchmarks} & Measured the throughput of the ingestion process, ensuring the system can handle high volumes of book data \\
-\hline
-\textbf{SearchBenchmarks} & Tested search latency under load, simulating concurrent user queries to verify the responsiveness of the cache and database \\
-\hline
-\end{tabular}
-\caption{JMH performance benchmarks}
-\end{table}
-
 \subsection{Load Testing with Locust}
 
 \begin{warningbox}[Performance Validation]
