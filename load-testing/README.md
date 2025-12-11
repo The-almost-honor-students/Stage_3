@@ -20,8 +20,8 @@ pip install locust
 
 2. Run Locust to raise a WEB UI with dashboards and logs where we can see how it interacts:
     ```bash
-    locust
-    ```
+    locust -f load-testing/locustfile.py
+      ```
     Or specify the host directly if running from CLI without UI (headless):
     ```bash
     locust --headless --users 10 --spawn-rate 1 -H http://localhost:9090
