@@ -1110,10 +1110,10 @@ Set-ExecutionPolicy RemoteSigned -Scope Process
 \subsubsection{Execution of the Synchronization Script}
 
 
-Execute the \texttt{configure\_sizing.ps1} script to prepare the data volumes and ensure the datalake (the shared book folder) is correctly configured and visible to all nodes for replication purposes.
+Execute the \texttt{configure\_syncthing.ps1} script to prepare the data volumes and ensure the datalake (the shared book folder) is correctly configured and visible to all nodes for replication purposes.
 
 \begin{lstlisting}
-./configure_sizing.ps1
+./configure_syncthing.ps1
 \end{lstlisting}
 
 \subsubsection{Accepting Datalake Connections}
