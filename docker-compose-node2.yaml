@@ -57,9 +57,8 @@ services:
       - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://10.26.14.222:4318/v1/logs
       - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://10.26.14.222:4318/v1/metrics
       - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://10.26.14.222:4318/v1/traces
-      - OTEL_RESOURCE_ATTRIBUTES=host.name=node1
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=node2
       - NODE_IP=10.26.14.222
-      - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
       - MONGO_URL=mongodb://10.26.14.222:27017
       - DATABASE_NAME=books
       - COLLECTION_METADATA=metadata
