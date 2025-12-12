@@ -12,7 +12,7 @@ services:
       - ARTEMIS_USER=admin
       - ARTEMIS_PASSWORD=admin
     volumes:
-      - ./broker/node2:/var/lib/artemis-instance/etc-override
+      - ./broker/node1:/var/lib/artemis-instance/etc-override
 
   crawler:
     image: giselabcr8888/crawler:1.2.0
@@ -50,16 +50,21 @@ services:
       - engine-volume:/app
 
   search:
-    image: giselabcr8888/search:1.2.0
+    image: giselabcr8888/search:1.2.1
     container_name: search
     environment:
+      - OTEL_SERVICE_NAME=search-service
+      - OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://10.26.14.222:4318/v1/logs
+      - OTEL_EXPORTER_OTLP_METRICS_ENDPOINT=http://10.26.14.222:4318/v1/metrics
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://10.26.14.222:4318/v1/traces
+      - OTEL_RESOURCE_ATTRIBUTES=host.name=node1
       - NODE_IP=10.26.14.222
       - JAVA_TOOL_OPTIONS=-XX:-UseContainerSupport
+      - MONGO_URL=mongodb://10.26.14.222:27017
       - DATABASE_NAME=books
       - COLLECTION_METADATA=metadata
       - COLLECTION_INDEX=inverted_index
-      - MONGO_URL=mongodb://10.26.14.222:27017
-      - HAZELCAST_MEMBERS=10.26.14.223:5701,10.26.14.222:5701,10.26.14.221:5701
+      - HAZELCAST_MEMBERS=10.26.14.221:5701,10.26.14.222:5701,10.26.14.223:5701
     ports:
       - "9090:9090"
       - "5702:5701"
@@ -73,7 +78,7 @@ services:
   syncthing:
     image: linuxserver/syncthing:2.0.12
     container_name: syncthing
-    hostname: node2
+    hostname: node1
     #    network_mode: host
     environment:
       - PUID=0
