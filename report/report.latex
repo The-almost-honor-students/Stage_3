@@ -1017,7 +1017,7 @@ The distributed system is deployed across three laboratory nodes. The final digi
 \hline
 \textbf{Node 1} & \texttt{10.26.14.221} & Microservices \\
 \hline
-\textbf{Node 2} & \texttt{10.26.14.222} & Microservices + Transversal (MongoDB, Nginx) \\
+\textbf{Node 2} & \texttt{10.26.14.222} & Microservices + Transversal (MongoDB, Nginx...) \\
 \hline
 \textbf{Node 3} & \texttt{10.26.14.223} & Microservices \\
 \hline
