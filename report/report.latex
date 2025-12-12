@@ -631,27 +631,44 @@ and must be available to all nodes. In our architecture, these include:
 \begin{itemize}
     \item \textbf{MongoDB}: The persistent data storage layer.
     \item \textbf{Nginx}: The reverse proxy and HTTP load balancer.
-    \item \textbf{Prometheus}: The metrics backend that scrapes and stores time-series data from the services.
-    \item \textbf{Jaeger}: The distributed tracing backend used to visualize and analyse request flows across microservices.
-    \item \textbf{OpenTelemetry Collector}: The central component that receives telemetry data (metrics, traces and logs) from the services and exports it to Prometheus, Jaeger and Loki.
-    \item \textbf{Loki}: The log aggregation system that stores application logs and complements metrics and traces for debugging.
+    \item \textbf{Prometheus}: The metrics backend that scrapes and stores time-series data from all microservices.
+    \item \textbf{Jaeger}: The distributed tracing backend used to visualize and analyse request propagation across services.
+    \item \textbf{OpenTelemetry Collector}: The ingestion and routing pipeline that receives telemetry (metrics, logs, traces) from all services and forwards them to Prometheus, Loki and Jaeger.
+    \item \textbf{Loki}: The centralized log aggregation system for querying container logs.
+    \item \textbf{Grafana}: The unified observability dashboard where metrics (Prometheus), logs (Loki) and traces (Jaeger) are visualized together.
 \end{itemize}
 
-In addition to the Docker Compose file for each node's specific services, the transversal
-services (MongoDB and Nginx) are also deployed on designated machines to ensure availability
-and proper data persistence.
+The transversal components are deployed through the
+\texttt{transversal\_services/docker-compose.yaml} file, which centralizes the monitoring and
+observability stack. All microservices deployed across the cluster communicate with these
+components to report their operational data.
 
-For our laboratory testing configuration, we deployed the transversal services on \textbf{Node 2}.
-This means that in addition to running the search and indexer services, Node 2 also hosts:
+For the laboratory environment, all transversal services were deployed on \textbf{Node 2}. This node therefore hosts:
 
 \begin{itemize}
-    \item The MongoDB instance that serves as the central database
-    \item The Nginx reverse proxy for load balancing and routing
+    \item MongoDB
+    \item Nginx Load Balancer
+    \item Prometheus
+    \item Jaeger
+    \item Loki
+    \item Grafana
+    \item OpenTelemetry Collector
 \end{itemize}
 
-This configuration ensures that all nodes in the cluster have access to the shared database
-and can properly route requests through the load balancer, while maintaining the distributed
-nature of the processing services.
+This ensures that every node has access to the same monitoring and persistence infrastructure.
+
+\subsubsection*{Deployment Example: Node 2 Configuration}
+
+\begin{verbatim}
+# Start transversal services (MongoDB, Nginx, Prometheus, Jaeger, Loki, Grafana, OTel Collector)
+docker compose -f transversal_services/docker-compose.yaml up -d
+
+# Start Node 2 microservices (Search, Indexer, etc.)
+docker compose -f docker-compose-node2.yaml up -d
+\end{verbatim}
+
+Deploying all observability components together allows telemetry (metrics, logs, traces) to be
+visualized centrally through Grafana.
 
 \subsubsection*{Deployment Example: Node 2 Configuration}
 
@@ -689,6 +706,7 @@ for \textbf{MongoDB}, \textbf{Nginx}, \textbf{Prometheus}, \textbf{Jaeger}, the
 \texttt{docker-compose-node2.yaml} contains the node-specific
 services (crawler, indexer, search, and ActiveMQ broker).
 
+
 \subsection{Observability and Monitoring with OpenTelemetry}
 
 To monitor the behaviour of the platform in a consistent way, we use \textbf{OpenTelemetry}
@@ -721,6 +739,20 @@ communication between services.
 \begin{infobox}[Quality Assurance Strategy]
 To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented covering unit tests, integration tests.
 \end{infobox}
+
+\subsubsection*{Grafana as Unified Observability Dashboard}
+
+All telemetry exported through the OpenTelemetry Collector is made accessible through
+\textbf{Grafana}. This interface consolidates:
+
+\begin{itemize}
+    \item Prometheus metrics (CPU, memory, request latency, request throughput)
+    \item Jaeger traces (distributed spans across Nginx → Search → Indexer)
+    \item Loki logs (service logs for debugging)
+\end{itemize}
+
+Grafana acts as the single entry point for observability, enabling correlation between
+latency spikes, specific traces and associated logs.
 
 \subsection{Unit Testing}
 
@@ -1088,6 +1120,51 @@ docker logs <search_container_id> -f
     \end{lstlisting}
     \item \textbf{Verify MongoDB Express:} Access the MongoDB Express interface to verify the persistence of metadata and the index.
 \end{enumerate}
+
+\subsection{Observability Verification: Metrics, Traces and Logs}
+
+Once the transversal services are deployed on Node 2, it is essential to verify that the
+monitoring stack is functioning correctly. The observability pipeline consists of:
+
+\begin{itemize}
+    \item \textbf{Prometheus} – collects metrics from microservices.
+    \item \textbf{Jaeger} – stores and displays distributed traces.
+    \item \textbf{Loki} – aggregates logs from all containers.
+    \item \textbf{Grafana} – unified dashboard for visualizing metrics, traces and logs.
+\end{itemize}
+
+\subsubsection*{Accessing Grafana}
+
+Grafana runs at:
+
+\begin{center}
+\texttt{http://<node2-ip>:3000}
+\end{center}
+
+Example: \texttt{http://10.26.14.222:3000}
+
+Default login:
+
+\begin{itemize}
+    \item User: \textbf{admin}
+    \item Password: \textbf{admin}
+\end{itemize}
+
+Three data sources appear preconfigured:
+
+\begin{itemize}
+    \item \textbf{Prometheus} (metrics)
+    \item \textbf{Loki} (logs)
+    \item \textbf{Jaeger} (traces)
+\end{itemize}
+
+\subsubsection*{What Must Be Validated}
+
+\begin{itemize}
+    \item \textbf{Metrics}: Prometheus panels show activity from Search, Crawler, Indexer.
+    \item \textbf{Traces}: Jaeger shows multi-service traces from the \texttt{/search} endpoint.
+    \item \textbf{Logs}: Loki correctly displays logs from all microservices.
+\end{itemize}
 
 \subsection{Load Testing with Locust}
 
