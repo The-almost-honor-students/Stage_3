@@ -2,7 +2,7 @@ from locust import HttpUser, task, between
 import random
 
 class SearchUser(HttpUser):
-    wait_time = between(1, 3)  # Simulate a user thinking for 1-3 seconds between searches
+    wait_time = between(1, 3)
 
     search_terms = [
         "love", "home", "happiness", "health", "money", "engineering", "computer",
@@ -48,10 +48,7 @@ class SearchUser(HttpUser):
 
         "shadow", "crystal", "ember", "flame", "whisper", "pattern", "signal",
         "origin", "legacy", "portal", "dimension", "framework", "module",
-        "context", "matrix", "tensor", "gravitywell",
-
-        "1990", "1995", "1999", "2001", "2005", "2008", "2010", "2012",
-        "2015", "2018", "2020", "2022", "2023", "2024"
+        "context", "matrix", "tensor", "gravitywell"
     ]
 
     @task
