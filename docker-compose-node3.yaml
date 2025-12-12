@@ -78,7 +78,7 @@ services:
   syncthing:
     image: linuxserver/syncthing:2.0.12
     container_name: syncthing
-    hostname: node1
+    hostname: node3
     #    network_mode: host
     environment:
       - PUID=0
