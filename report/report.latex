@@ -1041,22 +1041,27 @@ The distributed system is deployed across three laboratory nodes. The final digi
 \subsection{Environment Setup}
 
 \subsubsection{Python Environment Preparation for Load Testing}
-Before executing Locust, a Python virtual environment must be configured and necessary dependencies activated. This is only required on the machine designated for running Locust (typically one of the nodes or a client).
+
+Before executing Locust in the laboratory machines, we installed it at user-level to avoid permission issues and ensure compatibility across different environments.
 
 \begin{enumerate}
-    \item Create the virtual environment:
+    \item Install Locust using the \texttt{--user} flag:
     \begin{lstlisting}
-python3 -m venv Stage_3
+pip install locust --user
     \end{lstlisting}
-    \item Activate the virtual environment:
+
+    \item Verify Locust installation (optional):
     \begin{lstlisting}
-source Stage_3/bin/activate
+python -m locust --version
     \end{lstlisting}
-    \item Install Locust and dependencies:
+
+    \item Execute Locust using Python module execution:
     \begin{lstlisting}
-pip install locust
+python -m locust -f locustfile.py
     \end{lstlisting}
 \end{enumerate}
+
+Once started, Locust exposes its web interface by default on port \texttt{8089}.
 
 \subsection{Service Deployment}
 
@@ -1103,6 +1108,8 @@ Set-ExecutionPolicy RemoteSigned -Scope Process
 \end{lstlisting}
 
 \subsubsection{Execution of the Synchronization Script}
+
+
 Execute the \texttt{configure\_sizing.ps1} script to prepare the data volumes and ensure the datalake (the shared book folder) is correctly configured and visible to all nodes for replication purposes.
 
 \begin{lstlisting}
@@ -1111,6 +1118,14 @@ Execute the \texttt{configure\_sizing.ps1} script to prepare the data volumes an
 
 \subsubsection{Accepting Datalake Connections}
 Ensure that the network or firewall configurations on all three machines allow the necessary connections for sharing the datalake folder, so that all containers can access the books and cluster members (Hazelcast and ActiveMQ) can communicate effectively.
+
+\subsubsection{Syncthing Configuration Script Execution (Windows/PowerShell)}
+
+To configure Syncthing in the laboratory machines, the script was executed using an ExecutionPolicy bypass to avoid local policy restrictions.
+
+\begin{lstlisting}
+powershell -ExecutionPolicy ByPass -file .\configure_syncthing.ps1
+\end{lstlisting}
 
 \subsection{System Verification and Monitoring}
 
@@ -1169,6 +1184,20 @@ Three data sources appear preconfigured:
     \item \textbf{Jaeger} (traces)
 \end{itemize}
 
+\subsubsection*{Importing the Search Dashboard in Grafana}
+
+In the laboratory setup, the Search Service dashboard was imported manually to ensure a consistent visualization layout across machines.
+
+\begin{enumerate}
+    \item Open Grafana: \texttt{http://<node2-ip>:3000}
+    \item Navigate to: \textbf{Dashboards} $\rightarrow$ \textbf{New} $\rightarrow$ \textbf{Import}
+    \item Upload the file: \texttt{search\_service.json}
+    \item Select the Prometheus/Loki data sources if Grafana requests mapping.
+    \item Click \textbf{Import} to create the dashboard.
+\end{enumerate}
+
+This imported dashboard contains the panel structure used to validate latency, throughput, CPU/memory utilization, and log correlation for the Search Service.
+
 \subsubsection*{What Must Be Validated}
 
 \begin{itemize}
@@ -1184,6 +1213,10 @@ Three data sources appear preconfigured:
     \label{fig:grafana_dashboard}
 \end{figure}
 
+\begin{infobox}[Laboratory Load Scenario]
+In the laboratory environment, the load test was executed with \textbf{500 concurrent users}, sending continuous requests to the Nginx entrypoint hosted at \texttt{http://localhost:8000/search}. This validates the cluster behaviour under higher concurrency than the local baseline tests performed previously.
+\end{infobox}
+
 \subsection{Load Testing with Locust}
 
 To evaluate the cluster's performance under stress, Locust is used to simulate high concurrency directed at the Nginx load balancer.
@@ -1193,27 +1226,37 @@ To evaluate the cluster's performance under stress, Locust is used to simulate h
     \begin{lstlisting}
 cd load-testing
     \end{lstlisting}
-    \item Run Locust:
+
+    \item Run Locust (laboratory execution):
     \begin{lstlisting}
-locust -f locustfile.py
+python -m locust -f locustfile.py
     \end{lstlisting}
-    \item Access the Locust web interface on port \texttt{8089} of the host machine (e.g., \texttt{http://localhost:8089}).
+
+    \item Access the Locust web interface on port \texttt{8089} of the host machine:
+    \begin{itemize}
+        \item Example: \texttt{http://localhost:8089}
+    \end{itemize}
+
     \item Configure and run the load test:
     \begin{itemize}
-        \item \textbf{Number of Users:} $\mathbf{500}$ or more (to stress the system).
-        \item \textbf{Host:} $\texttt{http://localhost:8000/search}$ (the Nginx endpoint).
+        \item \textbf{Number of Users:} $\mathbf{500}$ concurrent users.
+        \item \textbf{Spawn Rate:} 1 user/s (or the value used in the lab).
+        \item \textbf{Host:} \texttt{http://localhost:8000/search}
     \end{itemize}
+
     \item Monitor key metrics such as Requests/s and the $\mathbf{95^{th}}$ Percentile (\textbf{P95}) latency.
 \end{enumerate}
 
+The objective of this test is to stress the entrypoint (\textbf{Nginx} on port \texttt{8000}), which is responsible for distributing the load across the Search Service replicas in the cluster.
+
 \subsection{Functional Search Service Test}
 
-Perform a manual search test using a browser or a tool like \texttt{curl} or Postman, directed at the Nginx load balancer.
+Perform a manual search test using a browser.
 
 \begin{lstlisting}
-curl http://localhost:8000/search?q=Love
+http://localhost:9090/search?q=poems
 \end{lstlisting}
-Verify that the response is correct and originated from one of the Search Services in the cluster.
+We verified in the video that the response is correct and originated from one of the Search Services in the cluster.
 
 \subsection{Fault Tolerance Test (Failover)}
 
