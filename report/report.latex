@@ -201,7 +201,7 @@ This report presents the design, implementation, and deployment of a distributed
 
 \section*{Keywords}
 
-\textbf{Docker} $\bullet$ \textbf{Kubernetes} $\bullet$ \textbf{Cluster Architecture} $\bullet$ \textbf{Microservices} $\bullet$ \textbf{ActiveMQ Artemis} $\bullet$ \textbf{High Availability} $\bullet$ \textbf{Hazelcast} $\bullet$ \textbf{MongoDB} $\bullet$ \textbf{Event-Driven Architecture} $\bullet$ \textbf{Distributed Systems}
+\textbf{Docker} $\bullet$ \textbf{Kubernetes} $\bullet$ \textbf{Cluster Architecture} $\bullet$ \textbf{Microservices} $\bullet$ \textbf{ActiveMQ Artemis} $\bullet$ \textbf{High Availability} $\bullet$ \textbf{Hazelcast} $\bullet$ \textbf{MongoDB} $\bullet$ \textbf{Event-Driven Architecture} $\bullet$ \textbf{Distributed Systems} $\bullet$ \textbf{OpenTelemetry} $\bullet$ \textbf{Prometheus} $\bullet$ \textbf{Jaeger} $\bullet$ \textbf{Loki}
 
 \tableofcontents
 \newpage
@@ -629,8 +629,12 @@ The branch can be accessed at:
 and must be available to all nodes. In our architecture, these include:
 
 \begin{itemize}
-    \item \textbf{MongoDB}: The persistent data storage layer
-    \item \textbf{Nginx}: The reverse proxy and load balancer (when applicable)
+    \item \textbf{MongoDB}: The persistent data storage layer.
+    \item \textbf{Nginx}: The reverse proxy and HTTP load balancer.
+    \item \textbf{Prometheus}: The metrics backend that scrapes and stores time-series data from the services.
+    \item \textbf{Jaeger}: The distributed tracing backend used to visualize and analyse request flows across microservices.
+    \item \textbf{OpenTelemetry Collector}: The central component that receives telemetry data (metrics, traces and logs) from the services and exports it to Prometheus, Jaeger and Loki.
+    \item \textbf{Loki}: The log aggregation system that stores application logs and complements metrics and traces for debugging.
 \end{itemize}
 
 In addition to the Docker Compose file for each node's specific services, the transversal
@@ -679,9 +683,38 @@ This dual deployment approach on Node 2 provides several advantages:
     simplifies the network configuration and service discovery for other nodes.
 \end{itemize}
 
-The \texttt{transversal\_services/docker-compose.yaml} file contains the MongoDB and Nginx
-service definitions, while \texttt{docker-compose-node2.yaml} contains the node-specific
+The \texttt{transversal\_services/docker-compose.yaml} file contains the service definitions
+for \textbf{MongoDB}, \textbf{Nginx}, \textbf{Prometheus}, \textbf{Jaeger}, the
+\textbf{OpenTelemetry Collector} and \textbf{Loki}, while
+\texttt{docker-compose-node2.yaml} contains the node-specific
 services (crawler, indexer, search, and ActiveMQ broker).
+
+\subsection{Observability and Monitoring with OpenTelemetry}
+
+To monitor the behaviour of the platform in a consistent way, we use \textbf{OpenTelemetry}
+as a technology-agnostic observability layer. Instead of tying the microservices to a
+specific monitoring vendor or library, each service emits telemetry data (metrics, traces
+and logs) in a standard format that is understood by the \textbf{OpenTelemetry Collector}.
+
+The OpenTelemetry Collector runs as part of the transversal services defined in
+\texttt{transversal\_services/docker-compose.yaml}. From there, it:
+
+\begin{itemize}
+    \item Receives telemetry from the Crawler, Indexer and Search services.
+    \item Normalizes and processes that data in a single place.
+    \item Exports \textbf{metrics} to Prometheus, \textbf{traces} to Jaeger and \textbf{logs} to Loki.
+\end{itemize}
+
+Using OpenTelemetry has two main advantages for this project:
+
+\begin{itemize}
+    \item \textbf{Technology agnostic}: we do not depend on a single monitoring technology. If we decide to change the backend (for example, use another metrics system), we can reconfigure the Collector without modifying the microservices.
+    \item \textbf{Low coupling}: services only know that they send telemetry using OpenTelemetry. All the knowledge about concrete tools (Prometheus, Jaeger, Loki) is isolated in the Collector and the transversal services Docker Compose file.
+\end{itemize}
+
+This setup gives us a simple but complete observability stack, where metrics, traces and logs
+are collected for the whole cluster through the Nginx entrypoint and the internal
+communication between services.
 
 \section{Testing and Verification}
 
@@ -882,7 +915,7 @@ The comprehensive testing strategy ensures system reliability:
 \textbf{Hybrid Data Strategy}: Combining Hazelcast (speed) with MongoDB (durability) proved essential for balancing performance and data integrity.
 \end{infobox}
 
-\subsection{Future Work and Recommendations}
+\subsection{Future Work}
 
 \begin{warningbox}[Potential Enhancements]
 The following improvements could further enhance the system:
@@ -890,12 +923,13 @@ The following improvements could further enhance the system:
 \begin{enumerate}
     \item \textbf{Kubernetes Production Deployment}: Migrate from Docker Compose to Kubernetes for advanced orchestration features (auto-scaling, self-healing, rolling updates)
 
-    \item \textbf{Observability Stack}: Implement comprehensive monitoring with:
+    \item \textbf{Observability Stack}: Extend the current observability stack (OpenTelemetry Collector + Prometheus + Jaeger + Loki) by:
+
     \begin{itemize}
-        \item Prometheus for metrics collection
-        \item Grafana for visualization dashboards
-        \item ELK stack for centralized logging
-        \item Distributed tracing with Jaeger
+        \item Adding \textbf{Grafana} dashboards for metrics and traces.
+        \item Defining alerts based on Prometheus metrics (error rates, latency, saturation).
+        \item Improving log exploration by integrating Loki dashboards in Grafana.
+        \item Refining sampling strategies and retention policies for production-like scenarios.
     \end{itemize}
 
     \item \textbf{Advanced Search Features}:
