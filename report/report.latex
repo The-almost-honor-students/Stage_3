@@ -611,17 +611,28 @@ These images incorporate all the necessary configurations and optimizations for 
 execution in the cluster environment, including proper Hazelcast client configuration,
 ActiveMQ cluster connectivity, and MongoDB integration.
 
-\subsection{GitHub Laboratory Branch}
+\subsection{GitHub Monitoring Branch: \texttt{lab-monitoring}}
 
-A dedicated branch named \textbf{lab} was created in the GitHub repository specifically for
-laboratory testing and deployment. This branch contains all the configurations, scripts, and
-documentation required to successfully deploy and test the system in the laboratory environment.
+A new dedicated branch named \textbf{lab-monitoring} was created to integrate and validate
+all monitoring-related improvements introduced during this stage. This branch isolates the
+observability work from the main deployment and laboratory branches, ensuring safe
+experimentation and revision control without affecting production-ready configurations.
 
-The branch can be accessed at:
+The \textbf{lab-monitoring} branch includes:
 
-\begin{center}
-\texttt{https://github.com/The-almost-honor-students/Stage\_3/tree/lab}
-\end{center}
+\begin{itemize}[leftmargin=*]
+    \item Updated OpenTelemetry instrumentation for all microservices.
+    \item Improved Prometheus scraping configuration and new metric endpoints.
+    \item Enhanced Loki log ingestion rules and log formats.
+    \item Updated Grafana dashboards for system-wide visualization.
+    \item Adjustments to the \texttt{transversal\_services/docker-compose.yaml} for
+    full observability stack deployment, including Prometheus, Loki, Jaeger, Grafana
+    and the OpenTelemetry Collector.
+\end{itemize}
+
+This branch serves as the working environment for monitoring evolution and ensures that
+all observability enhancements can be validated independently before merging into the
+main codebase.
 
 \subsection{Transversal Services Architecture}
 
@@ -1165,6 +1176,13 @@ Three data sources appear preconfigured:
     \item \textbf{Traces}: Jaeger shows multi-service traces from the \texttt{/search} endpoint.
     \item \textbf{Logs}: Loki correctly displays logs from all microservices.
 \end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{grafana_dashboard.jpeg}
+    \caption{Grafana dashboard showing real-time metrics, CPU and memory utilization, query latency, and aggregated logs for the Search Service. This confirms that the OpenTelemetry → Prometheus/Loki → Grafana pipeline is working correctly.}
+    \label{fig:grafana_dashboard}
+\end{figure}
 
 \subsection{Load Testing with Locust}
 
