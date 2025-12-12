@@ -604,7 +604,7 @@ the laboratory deployment. The following images and their versions are now avail
 \begin{itemize}
     \item \textbf{Crawler Service}: \texttt{giselabcr8888/crawler:1.2.0}
     \item \textbf{Indexer Service}: \texttt{giselabcr8888/indexer:1.1.0}
-    \item \textbf{Search Service}: \texttt{giselabcr8888/search:1.1.0}
+    \item \textbf{Search Service}: \texttt{giselabcr8888/search:1.2.1}
 \end{itemize}
 
 These images incorporate all the necessary configurations and optimizations for distributed
