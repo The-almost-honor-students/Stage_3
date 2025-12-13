@@ -745,10 +745,11 @@ The OpenTelemetry Collector runs as part of the transversal services defined in
 \begin{infobox}[Why OpenTelemetry?]
 We were particularly interested in adopting \textbf{cloud-native observability and instrumentation projects} because they are \textbf{open source} and align with modern production practices in distributed systems.
 
-OpenTelemetry provides an \textbf{abstraction layer} that decouples our microservices from specific observability vendors and their proprietary libraries. Thanks to this, our project does not become dependent on a single technology: if in the future we decide to change the metrics, logging, or tracing backend, we can do so mainly by adjusting the Collector configuration rather than rewriting or modifying our services.
+OpenTelemetry provides an \textbf{abstraction layer} that decouples our microservices from specific observability vendors and their proprietary libraries. Thanks to this, our project does not become dependent on a single technology: if in the future we decide to change the metrics, logging, or tracing backend, we can do so mainly by adjusting the Collector configuration rather than rewriting or heavily modifying our services.
 
 In addition, we used \textbf{auto-instrumentation libraries} to capture \textbf{metrics, logs, and traces} with minimal manual code changes. This approach accelerates adoption, ensures consistent telemetry across services, and makes it easier to correlate signals end-to-end (Nginx entrypoint $\rightarrow$ Search $\rightarrow$ Indexer), improving debugging and performance analysis.
-\end{infobox}
+
+
 
 \section{Testing and Verification}
 
