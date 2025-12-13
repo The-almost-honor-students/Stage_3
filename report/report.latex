@@ -749,7 +749,7 @@ OpenTelemetry provides an \textbf{abstraction layer} that decouples our microser
 
 In addition, we used \textbf{auto-instrumentation libraries} to capture \textbf{metrics, logs, and traces} with minimal manual code changes. This approach accelerates adoption, ensures consistent telemetry across services, and makes it easier to correlate signals end-to-end (Nginx entrypoint $\rightarrow$ Search $\rightarrow$ Indexer), improving debugging and performance analysis.
 
-
+\end{infobox}
 
 \section{Testing and Verification}
 
