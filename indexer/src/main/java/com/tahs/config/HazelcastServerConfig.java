@@ -9,9 +9,9 @@ public class HazelcastServerConfig {
 
     private static final String CLUSTER_NAME = "gutenberg-search-cluster";
     private static final List<String> CLUSTER_MEMBERS = Arrays.asList(
-            "192.168.1.133:5701",
-            "192.168.1.135:5701",
-            "192.168.1.143:5701");
+            "10.26.14.221:5701",
+            "10.26.14.222:5701",
+            "10.26.14.223:5701");
 
     public static Config createConfig(String hazelcastMembersStr) {
         Config config = new Config();

@@ -1,0 +1,21 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    url: http://10.26.14.222:1010
+    access: proxy
+    isDefault: true
+
+  - name: Loki
+    type: loki
+    uid: loki
+    url: http://10.26.14.222:3100
+    access: proxy
+
+  - name: Jaeger
+    type: jaeger
+    uid: jaeger
+    url: http://10.26.14.222:16686
+    access: proxy

@@ -137,7 +137,12 @@
 % ================== PORTADA ==================
 \begin{titlepage}
     \centering
-    \vspace*{1.5cm}
+    \vspace*{1cm}
+
+    % Imagen de la Escuela
+    \includegraphics[width=0.6\textwidth]{eii-acron-mod.png}
+
+    \vspace{1cm}
 
     {\LARGE \textbf{Stage 3: Building a Cluster Architecture}\par}
     \vspace{0.6cm}
@@ -146,13 +151,13 @@
     \vspace{0.4cm}
 
     {\large \textbf{Big Data -- Stage 3 (2025)}\par}
-    \vspace{2.2cm}
+    \vspace{1cm}
 
     {\large \textbf{Bachelor’s Degree in Data Science and Engineering}\par}
     \vspace{0.3cm}
 
     {\large \textbf{University of Las Palmas de Gran Canaria}\par}
-    \vspace{2.0cm}
+    \vspace{1.5cm}
 
     {\large \textbf{Academic Year:} Third Year, First Semester\par}
     \vspace{0.8cm}
@@ -163,13 +168,20 @@
     \begin{center}
         {\large
         Gisela Belmonte Cruz\\[0.2cm]
-        Nerea Valido Calzada\\[0.2cm]
+        Nerea Valzada Calzada\\[0.2cm]
         Kaarlo Caballero Nillukka\\[0.2cm]
         Ancor González Hernández\\[0.2cm]
         }
     \end{center}
 
     \vfill
+    \vspace{0.2cm}
+
+    {\large \textbf{Project Video (YouTube):}\par} % Nuevo Título
+    \vspace{0.2cm}
+    {\large \url{<link>}\par} % Nuevo Enlace
+
+    \vspace{0.3cm}
 
     {\large \textbf{GitHub Repository:}\par}
     \vspace{0.2cm}
@@ -189,7 +201,7 @@ This report presents the design, implementation, and deployment of a distributed
 
 \section*{Keywords}
 
-\textbf{Docker} $\bullet$ \textbf{Kubernetes} $\bullet$ \textbf{Cluster Architecture} $\bullet$ \textbf{Microservices} $\bullet$ \textbf{ActiveMQ Artemis} $\bullet$ \textbf{High Availability} $\bullet$ \textbf{Hazelcast} $\bullet$ \textbf{MongoDB} $\bullet$ \textbf{Event-Driven Architecture} $\bullet$ \textbf{Distributed Systems}
+\textbf{Docker} $\bullet$ \textbf{Kubernetes} $\bullet$ \textbf{Cluster Architecture} $\bullet$ \textbf{Microservices} $\bullet$ \textbf{ActiveMQ Artemis} $\bullet$ \textbf{High Availability} $\bullet$ \textbf{Hazelcast} $\bullet$ \textbf{MongoDB} $\bullet$ \textbf{Event-Driven Architecture} $\bullet$ \textbf{Distributed Systems} $\bullet$ \textbf{OpenTelemetry} $\bullet$ \textbf{Prometheus} $\bullet$ \textbf{Jaeger} $\bullet$ \textbf{Loki}
 
 \tableofcontents
 \newpage
@@ -241,9 +253,9 @@ This setup provides several key advantages:
 
 \begin{enumerate}
     \item \textbf{High Efficiency and Load Distribution}: By redistributing messages across the cluster, we ensure that no single broker is a bottleneck. Consumers can connect to any node in the cluster, and messages are efficiently routed to where they are needed. This redistribution mechanism optimizes the consumption of messages by the worker machines (Ingestion and Indexing services).
-    
+
     \item \textbf{Redistribution Configuration}: The key mechanism enabling this distributed behavior is the \texttt{redistribution-delay} setting within the \texttt{broker.xml} configuration files. By setting this parameter to \texttt{0} inside the \texttt{<address-settings>} block, we ensure that messages are immediately redistributed to other nodes if there are no local consumers available, maximizing throughput and minimizing latency.
-    
+
     \item \textbf{High Availability and Fault Tolerance}: The cluster architecture avoids a \textit{Single Point of Failure (SPOF)}. If one machine or broker node goes down, the other nodes continue to operate, ensuring the workflow is not interrupted. The system is highly distributed, meaning the failure of a single component does not stop the entire data processing pipeline.
 \end{enumerate}
 
@@ -261,10 +273,9 @@ To optimize performance without sacrificing data integrity, we implemented a hyb
 \centering
 \begin{tabular}{|l|p{5cm}|p{5cm}|}
 \hline
-\rowcolor{lightblue}
 \textbf{Component} & \textbf{Role} & \textbf{Key Features} \\
 \hline
-\textbf{Hazelcast} & Distributed In-Memory Cache & 
+\textbf{Hazelcast} & Distributed In-Memory Cache &
 \begin{itemize}[leftmargin=*, nosep]
     \item Ultra-low latency ($<$ 1ms)
     \item Distributed data grid
@@ -272,7 +283,7 @@ To optimize performance without sacrificing data integrity, we implemented a hyb
     \item Cluster-wide synchronization
 \end{itemize} \\
 \hline
-\textbf{MongoDB} & Persistent Data Store & 
+\textbf{MongoDB} & Persistent Data Store &
 \begin{itemize}[leftmargin=*, nosep]
     \item Authoritative source of truth
     \item Durable storage
@@ -288,6 +299,25 @@ To optimize performance without sacrificing data integrity, we implemented a hyb
 \textbf{Hazelcast does NOT replace MongoDB}. Hazelcast provides speed for active processing and caching, while MongoDB ensures data durability and persistence. Both components work together to provide optimal performance and reliability.
 \end{warningbox}
 
+
+\subsubsection{High Availability and Distributed Service Deployment}
+
+The core microservices (\textbf{Crawler}, \textbf{Indexer}, and \textbf{Search}) are deployed across all three cluster nodes. This strategy ensures the system is inherently \textbf{highly available} and \textbf{distributed}.
+
+\begin{techbox}[Service Replication Strategy]
+\textbf{Goal}: Achieve redundancy and load distribution across the cluster.
+\begin{itemize}[leftmargin=*]
+    \item \textbf{Deployment Model}: Each node (\texttt{Node 1}, \texttt{Node 2}, \texttt{Node 3}) runs instances of the \texttt{Crawler}, \texttt{Indexer}, and \texttt{Search} services.
+    \item \textbf{High Availability (HA)}: In the event of a machine failure (e.g., \texttt{Node 1} goes down), the processing load is instantly taken over by the redundant services running on the remaining operational machines (\texttt{Node 2} and \texttt{Node 3}).
+    \item \textbf{Load Distribution}:
+    \begin{itemize}
+        \item \textbf{Search Service}: Incoming requests are distributed by the Nginx Load Balancer (running on \texttt{Node 2}) across all available instances of the \texttt{Search} service in the cluster.
+        \item \textbf{Crawler/Indexer Services}: These services consume events from the ActiveMQ Artemis cluster, whose message redistribution mechanism ensures that messages are processed efficiently by any available worker instance across the three nodes.
+    \end{itemize}
+\end{itemize}
+This architecture ensures that the failure of a single physical machine does not result in a system outage, fulfilling the key objective of fault tolerance through redundancy.
+\end{techbox}
+
 \section{Microservices Architecture}
 
 \subsection{Core Services Overview}
@@ -298,10 +328,9 @@ The system relies on three main microservices, all containerized and orchestrate
 \centering
 \begin{tabular}{|l|p{4.5cm}|p{6cm}|}
 \hline
-\rowcolor{primaryblue!20}
 \textbf{Service} & \textbf{Primary Responsibility} & \textbf{Key Features} \\
 \hline
-\textbf{Crawler} & Book Discovery \& Download & 
+\textbf{Crawler} & Book Discovery \& Download &
 \begin{itemize}[leftmargin=*, nosep]
     \item Fetches books from Project Gutenberg
     \item Deduplication mechanism
@@ -309,7 +338,7 @@ The system relies on three main microservices, all containerized and orchestrate
     \item Datalake storage integration
 \end{itemize} \\
 \hline
-\textbf{Indexer} & Content Indexing & 
+\textbf{Indexer} & Content Indexing &
 \begin{itemize}[leftmargin=*, nosep]
     \item Event-driven processing
     \item Inverted index creation
@@ -317,7 +346,7 @@ The system relies on three main microservices, all containerized and orchestrate
     \item MongoDB persistence
 \end{itemize} \\
 \hline
-\textbf{Search} & Query Processing & 
+\textbf{Search} & Query Processing &
 \begin{itemize}[leftmargin=*, nosep]
     \item REST API endpoint
     \item Cache-first query strategy
@@ -328,6 +357,7 @@ The system relies on three main microservices, all containerized and orchestrate
 \end{tabular}
 \caption{Microservices architecture components}
 \end{table}
+
 
 \subsection{Deduplication Mechanism}
 
@@ -366,8 +396,8 @@ From the perspective of the rest of the system, the scheduler behaves as another
 
 \subsection{Kubernetes: Local Cluster Deployment with kind}
 
-As part of the investigation, Kubernetes was studied using the official kind documentation [1], and the internal architecture of Kubernetes was analyzed through the official project documentation [2].  
-A significant effort was dedicated to understanding and configuring Kubernetes using \texttt{kind} (Kubernetes IN Docker) [1]. Although Kubernetes was not required for the final deployment of the microservices, it was intentionally explored due to its relevance in large-scale distributed architectures.
+As part of the investigation, Kubernetes was studied using the official kind documentation [1], and the internal architecture of Kubernetes was analyzed through the official project documentation [2].
+A significant effort was dedicated to understand and configure Kubernetes using \texttt{kind} (Kubernetes IN Docker) [1]. Although Kubernetes was not required for the final deployment of the microservices, it was intentionally explored due to its relevance in large-scale distributed architectures.
 
 This research complements the main system development by offering insights into how the ingestion, indexing, and search services could operate inside a realistic distributed environment. Kubernetes provides features such as declarative deployments, load balancing, automatic recovery, and namespace isolation.
 
@@ -378,7 +408,7 @@ Docker provides lightweight containers, but Kubernetes extends these capabilitie
 \begin{itemize}
     \item Automated Pod recovery.
     \item Declarative configuration with YAML.
-    \item Load balancing with Services.
+    \item Load balancing.
     \item Autoscaling capabilities.
     \item Namespaces for isolation.
     \item Multi-node cluster simulation with \texttt{kind}.
@@ -397,8 +427,8 @@ The Kubernetes configuration used during the investigation was organized in \tex
 Each included:
 
 \begin{itemize}
-    \item Namespace  
-    \item Deployment  
+    \item Namespace
+    \item Deployment
     \item Service
 \end{itemize}
 
@@ -515,7 +545,6 @@ All images were published publicly to Docker Hub under the account \textbf{gisel
 \centering
 \begin{tabular}{|l|p{10cm}|}
 \hline
-\rowcolor{successgreen!20}
 \textbf{Benefit} & \textbf{Description} \\
 \hline
 \textbf{Reproducibility} & Ensures consistent behavior across all laboratory environments \\
@@ -536,7 +565,7 @@ All images were published publicly to Docker Hub under the account \textbf{gisel
 
 \subsection{Docker Compose Files for Multi-Node Deployment}
 
-To facilitate the deployment and testing of the distributed system in the laboratory environment, 
+To facilitate the deployment and testing of the distributed system in the laboratory environment,
 three separate Docker Compose configuration files were created, one for each node in the cluster:
 
 \begin{itemize}
@@ -545,12 +574,12 @@ three separate Docker Compose configuration files were created, one for each nod
     \item \texttt{docker-compose-node3.yaml}
 \end{itemize}
 
-Each file is specifically configured for its corresponding node, with appropriate IP addresses, 
+Each file is specifically configured for its corresponding node, with appropriate IP addresses,
 service configurations, and network settings tailored to the laboratory infrastructure.
 
 \subsection{Deployment Commands}
 
-To execute and start the services on each node, the following commands must be run on the 
+To execute and start the services on each node, the following commands must be run on the
 respective machines:
 
 \begin{verbatim}
@@ -564,7 +593,7 @@ docker compose -f docker-compose-node2.yaml up -d
 docker compose -f docker-compose-node3.yaml up -d
 \end{verbatim}
 
-The \texttt{-d} flag ensures that the containers run in detached mode, allowing them to 
+The \texttt{-d} flag ensures that the containers run in detached mode, allowing them to
 operate in the background.
 
 \subsection{Updated Docker Images}
@@ -575,55 +604,87 @@ the laboratory deployment. The following images and their versions are now avail
 \begin{itemize}
     \item \textbf{Crawler Service}: \texttt{giselabcr8888/crawler:1.2.0}
     \item \textbf{Indexer Service}: \texttt{giselabcr8888/indexer:1.1.0}
-    \item \textbf{Search Service}: \texttt{giselabcr8888/search:1.1.0}
+    \item \textbf{Search Service}: \texttt{giselabcr8888/search:1.2.1}
 \end{itemize}
 
-These images incorporate all the necessary configurations and optimizations for distributed 
-execution in the cluster environment, including proper Hazelcast client configuration, 
+These images incorporate all the necessary configurations and optimizations for distributed
+execution in the cluster environment, including proper Hazelcast client configuration,
 ActiveMQ cluster connectivity, and MongoDB integration.
 
-\subsection{GitHub Laboratory Branch}
+\subsection{GitHub Monitoring Branch: \texttt{lab-monitoring}}
 
-A dedicated branch named \textbf{lab} was created in the GitHub repository specifically for 
-laboratory testing and deployment. This branch contains all the configurations, scripts, and 
-documentation required to successfully deploy and test the system in the laboratory environment.
+A new dedicated branch named \textbf{lab-monitoring} was created to integrate and validate
+all monitoring-related improvements introduced during this stage. This branch isolates the
+observability work from the main deployment and laboratory branches, ensuring safe
+experimentation and revision control without affecting production-ready configurations.
 
-The branch can be accessed at:
+The \textbf{lab-monitoring} branch includes:
 
-\begin{center}
-\texttt{https://github.com/The-almost-honor-students/Stage\_3/tree/lab}
-\end{center}
+\begin{itemize}[leftmargin=*]
+    \item Updated OpenTelemetry instrumentation for all microservices.
+    \item Improved Prometheus scraping configuration and new metric endpoints.
+    \item Enhanced Loki log ingestion rules and log formats.
+    \item Updated Grafana dashboards for system-wide visualization.
+    \item Adjustments to the \texttt{transversal\_services/docker-compose.yaml} for
+    full observability stack deployment, including Prometheus, Loki, Jaeger, Grafana
+    and the OpenTelemetry Collector.
+\end{itemize}
+
+This branch serves as the working environment for monitoring evolution and ensures that
+all observability enhancements can be validated independently before merging into the
+main codebase.
 
 \subsection{Transversal Services Architecture}
 
-\textbf{Transversal services} are those common components that are shared across the cluster 
+\textbf{Transversal services} are those common components that are shared across the cluster
 and must be available to all nodes. In our architecture, these include:
 
 \begin{itemize}
-    \item \textbf{MongoDB}: The persistent data storage layer
-    \item \textbf{Nginx}: The reverse proxy and load balancer (when applicable)
+    \item \textbf{MongoDB}: The persistent data storage layer.
+    \item \textbf{Nginx}: The reverse proxy and HTTP load balancer.
+    \item \textbf{Prometheus}: The metrics backend that scrapes and stores time-series data from all microservices.
+    \item \textbf{Jaeger}: The distributed tracing backend used to visualize and analyse request propagation across services.
+    \item \textbf{OpenTelemetry Collector}: The ingestion and routing pipeline that receives telemetry (metrics, logs, traces) from all services and forwards them to Prometheus, Loki and Jaeger.
+    \item \textbf{Loki}: The centralized log aggregation system for querying container logs.
+    \item \textbf{Grafana}: The unified observability dashboard where metrics (Prometheus), logs (Loki) and traces (Jaeger) are visualized together.
 \end{itemize}
 
-In addition to the Docker Compose file for each node's specific services, the transversal 
-services (MongoDB and Nginx) are also deployed on designated machines to ensure availability 
-and proper data persistence.
+The transversal components are deployed through the
+\texttt{transversal\_services/docker-compose.yaml} file, which centralizes the monitoring and
+observability stack. All microservices deployed across the cluster communicate with these
+components to report their operational data.
 
-For our laboratory testing configuration, we deployed the transversal services on \textbf{Node 2}. 
-This means that in addition to running the search and indexer services, Node 2 also hosts:
+For the laboratory environment, all transversal services were deployed on \textbf{Node 2}. This node therefore hosts:
 
 \begin{itemize}
-    \item The MongoDB instance that serves as the central database
-    \item The Nginx reverse proxy for load balancing and routing
+    \item MongoDB
+    \item Nginx Load Balancer
+    \item Prometheus
+    \item Jaeger
+    \item Loki
+    \item Grafana
+    \item OpenTelemetry Collector
 \end{itemize}
 
-This configuration ensures that all nodes in the cluster have access to the shared database 
-and can properly route requests through the load balancer, while maintaining the distributed 
-nature of the processing services.
+This ensures that every node has access to the same monitoring and persistence infrastructure.
 
 \subsubsection*{Deployment Example: Node 2 Configuration}
 
-In our testing scenario, \textbf{Node 2} was configured to run both its own node-specific services 
-and the transversal services. This required executing two separate Docker Compose commands on the 
+\begin{verbatim}
+# Start transversal services (MongoDB, Nginx, Prometheus, Jaeger, Loki, Grafana, OTel Collector)
+docker compose -f transversal_services/docker-compose.yaml up -d
+
+# Start Node 2 microservices (Search, Indexer, etc.)
+docker compose -f docker-compose-node2.yaml up -d
+\end{verbatim}
+
+Deploying all observability components together allows telemetry (metrics, logs, traces) to be
+visualized centrally through Grafana.
+
+\subsubsection*{Deployment Example: Node 2 Configuration}
+
+In our testing scenario, \textbf{Node 2} was configured to run both its own node-specific services
+and the transversal services. This required executing two separate Docker Compose commands on the
 same machine:
 
 \begin{verbatim}
@@ -637,28 +698,72 @@ docker compose -f docker-compose-node2.yaml up -d
 This dual deployment approach on Node 2 provides several advantages:
 
 \begin{itemize}
-    \item \textbf{Centralized Data Access}: All nodes can connect to the MongoDB instance 
+    \item \textbf{Centralized Data Access}: All nodes can connect to the MongoDB instance
     running on Node 2, ensuring consistent data access across the cluster.
-    
-    \item \textbf{Load Balancing}: The Nginx reverse proxy on Node 2 can distribute incoming 
+
+    \item \textbf{Load Balancing}: The Nginx reverse proxy on Node 2 can distribute incoming
     search requests across all available search service instances in the cluster.
-    
-    \item \textbf{Resource Optimization}: By consolidating transversal services on a single 
+
+    \item \textbf{Resource Optimization}: By consolidating transversal services on a single
     node, we reduce redundancy and optimize resource utilization across the cluster.
-    
-    \item \textbf{Simplified Configuration}: Having a designated node for shared services 
+
+    \item \textbf{Simplified Configuration}: Having a designated node for shared services
     simplifies the network configuration and service discovery for other nodes.
 \end{itemize}
 
-The \texttt{transversal\_services/docker-compose.yaml} file contains the MongoDB and Nginx 
-service definitions, while \texttt{docker-compose-node2.yaml} contains the node-specific 
+The \texttt{transversal\_services/docker-compose.yaml} file contains the service definitions
+for \textbf{MongoDB}, \textbf{Nginx}, \textbf{Prometheus}, \textbf{Jaeger}, the
+\textbf{OpenTelemetry Collector} and \textbf{Loki}, while
+\texttt{docker-compose-node2.yaml} contains the node-specific
 services (crawler, indexer, search, and ActiveMQ broker).
+
+
+\subsection{Observability and Monitoring with OpenTelemetry}
+
+To monitor the behaviour of the platform in a consistent way, we use \textbf{OpenTelemetry}
+as a technology-agnostic observability layer. Instead of tying the microservices to a
+specific monitoring vendor or library, each service emits telemetry data (metrics, traces
+and logs) in a standard format that is understood by the \textbf{OpenTelemetry Collector}.
+
+The OpenTelemetry Collector runs as part of the transversal services defined in
+\texttt{transversal\_services/docker-compose.yaml}. From there, it:
+
+\begin{itemize}
+    \item Receives telemetry from the Crawler, Indexer and Search services.
+    \item Normalizes and processes that data in a single place.
+    \item Exports \textbf{metrics} to Prometheus, \textbf{traces} to Jaeger and \textbf{logs} to Loki.
+\end{itemize}
+
+Using OpenTelemetry has two main advantages for this project:
+
+\begin{itemize}
+    \item \textbf{Technology agnostic}: we do not depend on a single monitoring technology. If we decide to change the backend (for example, use another metrics system), we can reconfigure the Collector without modifying the microservices.
+    \item \textbf{Low coupling}: services only know that they send telemetry using OpenTelemetry. All the knowledge about concrete tools (Prometheus, Jaeger, Loki) is isolated in the Collector and the transversal services Docker Compose file.
+\end{itemize}
+
+This setup gives us a simple but complete observability stack, where metrics, traces and logs
+are collected for the whole cluster through the Nginx entrypoint and the internal
+communication between services.
 
 \section{Testing and Verification}
 
 \begin{infobox}[Quality Assurance Strategy]
-To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented covering unit tests, integration tests, and performance benchmarks.
+To ensure the reliability, correctness, and performance of the distributed system, a comprehensive testing strategy was implemented covering unit tests, integration tests.
 \end{infobox}
+
+\subsubsection*{Grafana as Unified Observability Dashboard}
+
+All telemetry exported through the OpenTelemetry Collector is made accessible through
+\textbf{Grafana}. This interface consolidates:
+
+\begin{itemize}
+    \item Prometheus metrics (CPU, memory, request latency, request throughput)
+    \item Jaeger traces (distributed spans across Nginx → Search → Indexer)
+    \item Loki logs (service logs for debugging)
+\end{itemize}
+
+Grafana acts as the single entry point for observability, enabling correlation between
+latency spikes, specific traces and associated logs.
 
 \subsection{Unit Testing}
 
@@ -667,7 +772,7 @@ Unit tests were essential for verifying the core logic of individual components 
 
 \begin{itemize}[leftmargin=*]
     \item \textbf{TextTokenizerTest}: Verifies that book content is correctly split into tokens (terms) for indexing. This is critical for search engine accuracy.
-    
+
     \item \textbf{GutenbergHeaderSerializerTest}: Ensures that metadata (title, author, language) is correctly extracted from raw Project Gutenberg files.
 \end{itemize}
 \end{techbox}
@@ -682,80 +787,104 @@ Acceptance tests guarantee that microservices interact correctly:
 \end{itemize}
 \end{successbox}
 
-\subsection{Performance Benchmarking}
-
-Given the "Big Data" nature of the project, performance verification was paramount. We used the \textbf{JMH (Java Microbenchmark Harness)} framework to rigorously test the system's throughput and latency.
-
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|p{10cm}|}
-\hline
-\rowcolor{successgreen!20}
-\textbf{Benchmark} & \textbf{Purpose} \\
-\hline
-\textbf{IngestionBenchmarks} & Measured the throughput of the ingestion process, ensuring the system can handle high volumes of book data \\
-\hline
-\textbf{SearchBenchmarks} & Tested search latency under load, simulating concurrent user queries to verify the responsiveness of the cache and database \\
-\hline
-\end{tabular}
-\caption{JMH performance benchmarks}
-\end{table}
-
 \subsection{Load Testing with Locust}
 
 \begin{warningbox}[Performance Validation]
-To evaluate the system's performance under realistic user load conditions and measure key metrics such as latency, throughput, and response times, comprehensive load testing using \textbf{Locust} is essential.
+To evaluate the system's performance under realistic user load conditions and measure key metrics such as latency, throughput, and response times, comprehensive load testing using \textbf{Locust} is essential. This test was specifically configured to direct traffic to the Nginx Load Balancer running on port \texttt{8000}.
 \end{warningbox}
 
-\vspace{0.3cm}
+\subsubsection{Test Configuration and Locustfile}
 
-Locust is an open-source load testing tool that allows us to define user behavior with Python code and simulate thousands of concurrent users accessing the system.
+The test simulated \textbf{300 concurrent users} making search requests. The user behavior was defined in the following Python script (\texttt{locustfile.py}), utilizing the keywords \texttt{from locust import HttpUser, task, between} and \texttt{import random}:
 
-\subsubsection{Testing Objectives}
+\begin{lstlisting}[language=Python, caption=Locustfile Configuration for Search User]
+from locust import HttpUser, task, between
+import random
 
-\begin{enumerate}
-    \item \textbf{Latency Measurement}: Determine response time under various load conditions
-    \begin{itemize}
-        \item Average latency
-        \item Median (p50)
-        \item 95th percentile (p95)
-        \item 99th percentile (p99)
-    \end{itemize}
-    
-    \item \textbf{Throughput Analysis}: Measure requests per second (RPS) while maintaining acceptable response times
-    
-    \item \textbf{Scalability Verification}: Validate horizontal scaling effectiveness across cluster nodes
-    
-    \item \textbf{Bottleneck Identification}: Identify performance bottlenecks:
-    \begin{itemize}
-        \item Database query performance
-        \item Cache miss rates
-        \item Network latency between services
-    \end{itemize}
-    
-    \item \textbf{Stress Testing}: Determine system breaking point by gradually increasing load
-\end{enumerate}
+class SearchUser(HttpUser):
+    # Simulate a user thinking for 1-3 seconds between searches
+    wait_time = between(1, 3)
 
-\subsubsection{Test Scenarios}
+    # Partial list of search terms used for random queries
+    search_terms = [
+        "love", "home", "happiness", "health", "money", "engineering", "computer",
+        # ... (Lista completa de 100+ términos)
+        "2020", "2022", "2023", "2024"
+    ]
 
-\begin{table}[H]
-\centering
-\begin{tabular}{|l|p{9cm}|}
-\hline
-\rowcolor{warningorange!20}
-\textbf{Scenario} & \textbf{Description} \\
-\hline
-\textbf{Concurrent Queries} & Simulate multiple users performing search queries simultaneously with varying complexity \\
-\hline
-\textbf{Mixed Workloads} & Combine read and write operations to simulate realistic usage patterns \\
-\hline
-\textbf{Sustained Load} & Extended testing periods to detect memory leaks or resource exhaustion \\
-\hline
-\textbf{Spike Testing} & Evaluate system response to sudden traffic increases \\
-\hline
-\end{tabular}
-\caption{Locust load testing scenarios}
-\end{table}
+    @task
+    def search_books(self):
+        term = random.choice(self.search_terms)
+        # Target: Nginx Load Balancer on port 8000
+        self.client.get(f"/search?q={term}", name="/search")
+\end{lstlisting}
+
+The test was executed against the host $\texttt{http://localhost:8000/search}$, which is the endpoint exposed by the Nginx reverse proxy, responsible for distributing the load to the backend search services.
+
+\subsubsection{Execution and Results}
+
+The load test followed these steps, captured in the figures below:
+
+\paragraph{Step 1: Starting Locust}
+The test began by running the command \texttt{locust -f locustfile.py} from the terminal, which initializes the Locust web interface on port 8089.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{iniciar_locust.png}
+    \caption{Starting the Locust web server on port 8089.}
+    \label{fig:locust_start}
+\end{figure}
+
+\paragraph{Step 2: Test Configuration}
+The test was configured via the web interface to simulate $\mathbf{300}$ concurrent users, with a ramp-up rate of 1 user per second, targeting the Nginx Load Balancer.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{configuration_locust.png}
+    \caption{Locust test configuration, targeting the Nginx Load Balancer on \texttt{http://localhost:8000/search}.}
+    \label{fig:locust_config}
+\end{figure}
+
+\paragraph{Step 3: Initial Statistics (Spawning Phase)}
+As users were generated, the statistics tab provided real-time metrics, showing the system handling the initial traffic and reporting key response times (Median, P95) and the initial failure rate.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{statistics_locust.png}
+    \caption{Initial statistics view during the Spawning phase (11 users active).}
+    \label{fig:locust_initial_stats}
+\end{figure}
+
+\paragraph{Step 4: Real-time Performance Charts}
+The Charts tab showed the dynamic evolution of the system's performance metrics as the user count increased.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{charts_locust_running.png}
+    \caption{Locust charts showing the evolution of Requests per Second (RPS) and response times (p50, p95) during the test run.}
+    \label{fig:locust_running_charts}
+\end{figure}
+
+\paragraph{Step 5: Final Results at Peak Concurrency (300 Users)}
+The full-duration charts reveal the system's behavior up to and at the peak load of $\mathbf{300}$ concurrent users. The data highlights a maximum throughput of approximately 60 RPS, followed by an increase in the 95th percentile (P95) response time, indicating potential contention or resource saturation under maximum stress.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{total_requests_per_second_1765460149.69.png}
+    \caption{Locust charts after reaching 300 users, detailing the evolution of concurrent users, RPS, and latency throughout the test.}
+    \label{fig:locust_final_charts_full}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{final_300_users.png}
+    \caption{Final interface view confirming 300 active users and the recorded performance metrics.}
+    \label{fig:locust_final_stats}
+\end{figure}
+
+\subsubsection{Load Testing Conclusion}
+
+The Locust load test successfully validated the configuration of the Nginx Load Balancer to handle concurrent traffic on port 8000. The test provided crucial performance metrics, specifically demonstrating the system's capacity to sustain a certain level of throughput before significant latency increases were observed under the full load of 300 users. These results are essential for identifying optimization opportunities in the backend services to improve resilience and reduce P95 latency under high concurrency.
 
 \section{Conclusions and Future Work}
 
@@ -771,7 +900,6 @@ This project successfully demonstrates the design, implementation, and deploymen
 \centering
 \begin{tabular}{|l|p{10cm}|}
 \hline
-\rowcolor{primaryblue!20}
 \textbf{Achievement} & \textbf{Implementation} \\
 \hline
 \textbf{Microservices Architecture} & Successfully decomposed the system into three independent, scalable services (Crawler, Indexer, Search) \\
@@ -807,6 +935,152 @@ The project demonstrates professional DevOps practices:
     \item \textbf{Public Registry}: All images published to Docker Hub for easy deployment
     \item \textbf{Version Control}: Dedicated \texttt{lab} branch for laboratory testing
     \item \textbf{Infrastructure as Code}: Complete Docker Compose configurations for all nodes
+\end{itemize}
+\end{techbox}
+
+\subsection{Testing and Quality Assurance}
+
+The comprehensive testing strategy ensures system reliability:
+
+\begin{enumerate}
+    \item \textbf{Unit Tests}: Verify core logic components (tokenization, metadata extraction)
+    \item \textbf{Integration Tests}: Validate end-to-end service interactions
+    \item \textbf{Load Testing}: Locust scenarios for realistic user load simulation
+\end{enumerate}
+
+\subsection{Lessons Learned}
+
+\begin{infobox}[Key Insights]
+\textbf{Kubernetes Investigation}: While not required for final deployment, the Kubernetes exploration with \texttt{kind} provided valuable insights into container orchestration, declarative deployments, and production-grade cluster management.
+
+\textbf{Message Broker Configuration}: The \texttt{redistribution-delay=0} setting in ActiveMQ Artemis was crucial for optimal message distribution across cluster nodes.
+
+\textbf{Hybrid Data Strategy}: Combining Hazelcast (speed) with MongoDB (durability) proved essential for balancing performance and data integrity.
+\end{infobox}
+
+\subsection{Future Work}
+
+\begin{warningbox}[Potential Enhancements]
+The following improvements could further enhance the system:
+
+\begin{enumerate}
+    \item \textbf{Kubernetes Production Deployment}: Migrate from Docker Compose to Kubernetes for advanced orchestration features (auto-scaling, self-healing, rolling updates)
+
+    \item \textbf{Observability Stack}: Extend the current observability stack (OpenTelemetry Collector + Prometheus + Jaeger + Loki) by:
+
+    \begin{itemize}
+        \item Adding \textbf{Grafana} dashboards for metrics and traces.
+        \item Defining alerts based on Prometheus metrics (error rates, latency, saturation).
+        \item Improving log exploration by integrating Loki dashboards in Grafana.
+        \item Refining sampling strategies and retention policies for production-like scenarios.
+    \end{itemize}
+
+    \item \textbf{Advanced Search Features}:
+    \begin{itemize}
+        \item Fuzzy search and spell correction
+        \item Relevance ranking algorithms
+        \item Faceted search capabilities
+        \item Search result highlighting
+    \end{itemize}
+
+    \item \textbf{Data Analytics Pipeline}: Integrate Apache Spark for:
+    \begin{itemize}
+        \item Book popularity analysis
+        \item Search pattern analytics
+        \item Recommendation engine
+        \item Usage statistics and reporting
+    \end{itemize}
+
+    \item \textbf{Security Enhancements}:
+    \begin{itemize}
+        \item API authentication and authorization
+        \item TLS/SSL encryption for inter-service communication
+        \item Secrets management with HashiCorp Vault
+        \item Rate limiting and DDoS protection
+    \end{itemize}
+
+    \item \textbf{Disaster Recovery}: Implement backup strategies and cross-region replication
+
+    \item \textbf{CI/CD Pipeline}: Automated testing and deployment with GitHub Actions or Jenkins
+\end{enumerate}
+\end{warningbox}
+
+\subsection{Final Remarks}
+
+\begin{successbox}[Conclusion]
+This project successfully demonstrates the practical application of Big Data technologies and distributed systems principles. The architecture is scalable, fault-tolerant, and production-ready, showcasing modern best practices in microservices design, event-driven architecture, and containerized deployment.
+
+The system handles the complete lifecycle of book data: from discovery and ingestion through Project Gutenberg, to distributed indexing with Hazelcast and MongoDB, to efficient search capabilities with caching optimization. The multi-node cluster deployment with ActiveMQ Artemis ensures high availability and eliminates single points of failure.
+
+The knowledge and experience gained from this project are directly applicable to real-world Big Data systems and provide a solid foundation for future work in distributed computing and large-scale data processing.
+\end{successbox}
+
+
+\section{Laboratory Procedure Guide: Distributed Deployment and Testing}
+
+\begin{infobox}[Cluster Node Configuration]
+The distributed system is deployed across three laboratory nodes. The final digit of the IP determines the node number.
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Node} & \textbf{IP Address} & \textbf{Role} \\
+\hline
+\textbf{Node 1} & \texttt{10.26.14.221} & Microservices \\
+\hline
+\textbf{Node 2} & \texttt{10.26.14.222} & Microservices + Transversal (MongoDB, Nginx...) \\
+\hline
+\textbf{Node 3} & \texttt{10.26.14.223} & Microservices \\
+\hline
+\end{tabular}
+\end{center}
+\end{infobox}
+
+
+
+\subsection{Environment Setup}
+
+\subsubsection{Python Environment Preparation for Load Testing}
+
+Before executing Locust in the laboratory machines, we installed it at user-level to avoid permission issues and ensure compatibility across different environments.
+
+\begin{enumerate}
+    \item Install Locust using the \texttt{--user} flag:
+    \begin{lstlisting}
+pip install locust --user
+    \end{lstlisting}
+
+    \item Verify Locust installation (optional):
+    \begin{lstlisting}
+python -m locust --version
+    \end{lstlisting}
+
+    \item Execute Locust using Python module execution:
+    \begin{lstlisting}
+python -m locust -f locustfile.py
+    \end{lstlisting}
+\end{enumerate}
+
+Once started, Locust exposes its web interface by default on port \texttt{8089}.
+
+\subsection{Service Deployment}
+
+\subsubsection{Node-Specific Services Deployment}
+On each of the three cluster nodes, execute the \texttt{docker compose} command to deploy the microservices specific to that node (\texttt{crawler}, \texttt{indexer}, \texttt{search}, ActiveMQ).
+
+\begin{itemize}
+    \item \textbf{On Node 1 (\texttt{10.26.14.221}):}
+    \begin{lstlisting}
+docker compose -f docker-compose-node1.yaml up -d
+    \end{lstlisting}
+    \item \textbf{On Node 2 (\texttt{10.26.14.222}):}
+    \begin{lstlisting}
+docker compose -f docker-compose-node2.yaml up -d
+    \end{lstlisting}
+    \item \textbf{On Node 3 (\texttt{10.26.14.223}):}
+    \begin{lstlisting}
+docker compose -f docker-compose-node3.yaml up -d
+    \end{lstlisting}
 \end{itemize}
 \end{techbox}
 
@@ -886,6 +1160,198 @@ The system handles the complete lifecycle of book data: from discovery and inges
 
 The knowledge and experience gained from this project are directly applicable to real-world Big Data systems and provide a solid foundation for future work in distributed computing and large-scale data processing.
 \end{successbox}
+
+\subsubsection{Transversal Services Deployment (Node 2 Only)}
+The shared infrastructure services (\textbf{MongoDB} and the \textbf{Nginx Load Balancer}) are implemented centrally on Node 2.
+
+\begin{enumerate}
+    \item Navigate to the transversal services directory:
+    \begin{lstlisting}
+cd transversal_services
+    \end{lstlisting}
+    \item Execute the deployment of \texttt{mongodb} and \texttt{nginx}:
+    \begin{lstlisting}
+docker compose up -d
+    \end{lstlisting}
+\end{enumerate}
+At this point, all microservices and transversal services should be deployed and running across the cluster.
+
+\subsection{Datalake Configuration and Synchronization}
+
+\subsubsection{Execution Policy Configuration (Windows/PowerShell)}
+Before executing the configuration script, the PowerShell execution policy must be modified to allow the running of local scripts.
+
+\begin{lstlisting}
+Set-ExecutionPolicy RemoteSigned -Scope Process
+\end{lstlisting}
+
+\subsubsection{Execution of the Synchronization Script}
+
+
+Execute the \texttt{configure\_syncthing.ps1} script to prepare the data volumes and ensure the datalake (the shared book folder) is correctly configured and visible to all nodes for replication purposes.
+
+\begin{lstlisting}
+./configure_syncthing.ps1
+\end{lstlisting}
+
+\subsubsection{Accepting Datalake Connections}
+Ensure that the network or firewall configurations on all three machines allow the necessary connections for sharing the datalake folder, so that all containers can access the books and cluster members (Hazelcast and ActiveMQ) can communicate effectively.
+
+\subsubsection{Syncthing Configuration Script Execution (Windows/PowerShell)}
+
+To configure Syncthing in the laboratory machines, the script was executed using an ExecutionPolicy bypass to avoid local policy restrictions.
+
+\begin{lstlisting}
+powershell -ExecutionPolicy ByPass -file .\configure_syncthing.ps1
+\end{lstlisting}
+
+\subsection{System Verification and Monitoring}
+
+After deploying and configuring the services, their correct operation is verified by reviewing the container logs.
+
+\begin{enumerate}
+    \item \textbf{Verify Crawler Logs:}
+    \begin{lstlisting}
+docker logs <crawler_container_id> -f
+    \end{lstlisting}
+    \item \textbf{Verify Indexer Logs:}
+    \begin{lstlisting}
+docker logs <indexer_container_id> -f
+    \end{lstlisting}
+    \item \textbf{Verify Search Service Logs:}
+    \begin{lstlisting}
+docker logs <search_container_id> -f
+    \end{lstlisting}
+    \item \textbf{Verify MongoDB Express:} Access the MongoDB Express interface to verify the persistence of metadata and the index.
+\end{enumerate}
+
+\subsection{Observability Verification: Metrics, Traces and Logs}
+
+Once the transversal services are deployed on Node 2, it is essential to verify that the
+monitoring stack is functioning correctly. The observability pipeline consists of:
+
+\begin{itemize}
+    \item \textbf{Prometheus} – collects metrics from microservices.
+    \item \textbf{Jaeger} – stores and displays distributed traces.
+    \item \textbf{Loki} – aggregates logs from all containers.
+    \item \textbf{Grafana} – unified dashboard for visualizing metrics, traces and logs.
+\end{itemize}
+
+\subsubsection*{Accessing Grafana}
+
+Grafana runs at:
+
+\begin{center}
+\texttt{http://<node2-ip>:3000}
+\end{center}
+
+Example: \texttt{http://10.26.14.222:3000}
+
+Default login:
+
+\begin{itemize}
+    \item User: \textbf{admin}
+    \item Password: \textbf{admin}
+\end{itemize}
+
+Three data sources appear preconfigured:
+
+\begin{itemize}
+    \item \textbf{Prometheus} (metrics)
+    \item \textbf{Loki} (logs)
+    \item \textbf{Jaeger} (traces)
+\end{itemize}
+
+\subsubsection*{Importing the Search Dashboard in Grafana}
+
+In the laboratory setup, the Search Service dashboard was imported manually to ensure a consistent visualization layout across machines.
+
+\begin{enumerate}
+    \item Open Grafana: \texttt{http://<node2-ip>:3000}
+    \item Navigate to: \textbf{Dashboards} $\rightarrow$ \textbf{New} $\rightarrow$ \textbf{Import}
+    \item Upload the file: \texttt{search\_service.json}
+    \item Select the Prometheus/Loki data sources if Grafana requests mapping.
+    \item Click \textbf{Import} to create the dashboard.
+\end{enumerate}
+
+This imported dashboard contains the panel structure used to validate latency, throughput, CPU/memory utilization, and log correlation for the Search Service.
+
+\subsubsection*{What Must Be Validated}
+
+\begin{itemize}
+    \item \textbf{Metrics}: Prometheus panels show activity from Search, Crawler, Indexer.
+    \item \textbf{Traces}: Jaeger shows multi-service traces from the \texttt{/search} endpoint.
+    \item \textbf{Logs}: Loki correctly displays logs from all microservices.
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{grafana_dashboard.jpeg}
+    \caption{Grafana dashboard showing real-time metrics, CPU and memory utilization, query latency, and aggregated logs for the Search Service. This confirms that the OpenTelemetry → Prometheus/Loki → Grafana pipeline is working correctly.}
+    \label{fig:grafana_dashboard}
+\end{figure}
+
+\begin{infobox}[Laboratory Load Scenario]
+In the laboratory environment, the load test was executed with \textbf{500 concurrent users}, sending continuous requests to the Nginx entrypoint hosted at \texttt{http://localhost:8000/search}. This validates the cluster behaviour under higher concurrency than the local baseline tests performed previously.
+\end{infobox}
+
+\subsection{Load Testing with Locust}
+
+To evaluate the cluster's performance under stress, Locust is used to simulate high concurrency directed at the Nginx load balancer.
+
+\begin{enumerate}
+    \item Navigate to the load-testing folder:
+    \begin{lstlisting}
+cd load-testing
+    \end{lstlisting}
+
+    \item Run Locust (laboratory execution):
+    \begin{lstlisting}
+python -m locust -f locustfile.py
+    \end{lstlisting}
+
+    \item Access the Locust web interface on port \texttt{8089} of the host machine:
+    \begin{itemize}
+        \item Example: \texttt{http://localhost:8089}
+    \end{itemize}
+
+    \item Configure and run the load test:
+    \begin{itemize}
+        \item \textbf{Number of Users:} $\mathbf{500}$ concurrent users.
+        \item \textbf{Spawn Rate:} 1 user/s (or the value used in the lab).
+        \item \textbf{Host:} \texttt{http://localhost:8000/search}
+    \end{itemize}
+
+    \item Monitor key metrics such as Requests/s and the $\mathbf{95^{th}}$ Percentile (\textbf{P95}) latency.
+\end{enumerate}
+
+The objective of this test is to stress the entrypoint (\textbf{Nginx} on port \texttt{8000}), which is responsible for distributing the load across the Search Service replicas in the cluster.
+
+\subsection{Functional Search Service Test}
+
+Perform a manual search test using a browser.
+
+\begin{lstlisting}
+http://localhost:9090/search?q=poems
+\end{lstlisting}
+We verified in the video that the response is correct and originated from one of the Search Services in the cluster.
+
+\subsection{Fault Tolerance Test (Failover)}
+
+To verify the High Availability and fault tolerance of the distributed system:
+
+\begin{enumerate}
+    \item Select a node (e.g., Node 1) and stop its microservice containers:
+    \begin{lstlisting}
+# On Node 1 machine
+docker compose -f docker-compose-node1.yaml stop
+    \end{lstlisting}
+    \item \textbf{Verification:}
+    \begin{itemize}
+        \item Observe the logs of the remaining nodes (Node 2 and 3) to confirm the ActiveMQ and Hazelcast reconnections.
+        \item Repeat the functional search test (\texttt{/search?q=Love}) to confirm that the system remains operational without interruptions, with traffic successfully being redirected to the remaining nodes.
+    \end{itemize}
+\end{enumerate}
 
 \section{References}
 
