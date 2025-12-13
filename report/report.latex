@@ -725,6 +725,14 @@ as a technology-agnostic observability layer. Instead of tying the microservices
 specific monitoring vendor or library, each service emits telemetry data (metrics, traces
 and logs) in a standard format that is understood by the \textbf{OpenTelemetry Collector}.
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=\textwidth]{opentelemetry.png}
+    \caption{OpenTelemetry architecture overview: microservices emit telemetry (metrics, logs and traces) to the OpenTelemetry Collector, which exports the data to different backends.}
+    \label{fig:otel_architecture}
+\end{figure}
+\FloatBarrier
+
 The OpenTelemetry Collector runs as part of the transversal services defined in
 \texttt{transversal\_services/docker-compose.yaml}. From there, it:
 
@@ -734,16 +742,13 @@ The OpenTelemetry Collector runs as part of the transversal services defined in
     \item Exports \textbf{metrics} to Prometheus, \textbf{traces} to Jaeger and \textbf{logs} to Loki.
 \end{itemize}
 
-Using OpenTelemetry has two main advantages for this project:
+\begin{infobox}[Why OpenTelemetry?]
+We were particularly interested in adopting \textbf{cloud-native observability and instrumentation projects} because they are \textbf{open source} and align with modern production practices in distributed systems.
 
-\begin{itemize}
-    \item \textbf{Technology agnostic}: we do not depend on a single monitoring technology. If we decide to change the backend (for example, use another metrics system), we can reconfigure the Collector without modifying the microservices.
-    \item \textbf{Low coupling}: services only know that they send telemetry using OpenTelemetry. All the knowledge about concrete tools (Prometheus, Jaeger, Loki) is isolated in the Collector and the transversal services Docker Compose file.
-\end{itemize}
+OpenTelemetry provides an \textbf{abstraction layer} that decouples our microservices from specific observability vendors and their proprietary libraries. Thanks to this, our project does not become dependent on a single technology: if in the future we decide to change the metrics, logging, or tracing backend, we can do so mainly by adjusting the Collector configuration rather than rewriting or modifying our services.
 
-This setup gives us a simple but complete observability stack, where metrics, traces and logs
-are collected for the whole cluster through the Nginx entrypoint and the internal
-communication between services.
+In addition, we used \textbf{auto-instrumentation libraries} to capture \textbf{metrics, logs, and traces} with minimal manual code changes. This approach accelerates adoption, ensures consistent telemetry across services, and makes it easier to correlate signals end-to-end (Nginx entrypoint $\rightarrow$ Search $\rightarrow$ Indexer), improving debugging and performance analysis.
+\end{infobox}
 
 \section{Testing and Verification}
 
@@ -1082,84 +1087,6 @@ docker compose -f docker-compose-node2.yaml up -d
 docker compose -f docker-compose-node3.yaml up -d
     \end{lstlisting}
 \end{itemize}
-\end{techbox}
-
-\subsection{Testing and Quality Assurance}
-
-The comprehensive testing strategy ensures system reliability:
-
-\begin{enumerate}
-    \item \textbf{Unit Tests}: Verify core logic components (tokenization, metadata extraction)
-    \item \textbf{Integration Tests}: Validate end-to-end service interactions
-    \item \textbf{Performance Benchmarks}: JMH benchmarks for throughput and latency measurement
-    \item \textbf{Load Testing}: Locust scenarios for realistic user load simulation
-\end{enumerate}
-
-\subsection{Lessons Learned}
-
-\begin{infobox}[Key Insights]
-\textbf{Kubernetes Investigation}: While not required for final deployment, the Kubernetes exploration with \texttt{kind} provided valuable insights into container orchestration, declarative deployments, and production-grade cluster management.
-
-\textbf{Message Broker Configuration}: The \texttt{redistribution-delay=0} setting in ActiveMQ Artemis was crucial for optimal message distribution across cluster nodes.
-
-\textbf{Hybrid Data Strategy}: Combining Hazelcast (speed) with MongoDB (durability) proved essential for balancing performance and data integrity.
-\end{infobox}
-
-\subsection{Future Work and Recommendations}
-
-\begin{warningbox}[Potential Enhancements]
-The following improvements could further enhance the system:
-
-\begin{enumerate}
-    \item \textbf{Kubernetes Production Deployment}: Migrate from Docker Compose to Kubernetes for advanced orchestration features (auto-scaling, self-healing, rolling updates)
-    
-    \item \textbf{Observability Stack}: Implement comprehensive monitoring with:
-    \begin{itemize}
-        \item Prometheus for metrics collection
-        \item Grafana for visualization dashboards
-        \item ELK stack for centralized logging
-        \item Distributed tracing with Jaeger
-    \end{itemize}
-    
-    \item \textbf{Advanced Search Features}:
-    \begin{itemize}
-        \item Fuzzy search and spell correction
-        \item Relevance ranking algorithms
-        \item Faceted search capabilities
-        \item Search result highlighting
-    \end{itemize}
-    
-    \item \textbf{Data Analytics Pipeline}: Integrate Apache Spark for:
-    \begin{itemize}
-        \item Book popularity analysis
-        \item Search pattern analytics
-        \item Recommendation engine
-        \item Usage statistics and reporting
-    \end{itemize}
-    
-    \item \textbf{Security Enhancements}:
-    \begin{itemize}
-        \item API authentication and authorization
-        \item TLS/SSL encryption for inter-service communication
-        \item Secrets management with HashiCorp Vault
-        \item Rate limiting and DDoS protection
-    \end{itemize}
-    
-    \item \textbf{Disaster Recovery}: Implement backup strategies and cross-region replication
-    
-    \item \textbf{CI/CD Pipeline}: Automated testing and deployment with GitHub Actions or Jenkins
-\end{enumerate}
-\end{warningbox}
-
-\subsection{Final Remarks}
-
-\begin{successbox}[Conclusion]
-This project successfully demonstrates the practical application of Big Data technologies and distributed systems principles. The architecture is scalable, fault-tolerant, and production-ready, showcasing modern best practices in microservices design, event-driven architecture, and containerized deployment.
-
-The system handles the complete lifecycle of book data: from discovery and ingestion through Project Gutenberg, to distributed indexing with Hazelcast and MongoDB, to efficient search capabilities with caching optimization. The multi-node cluster deployment with ActiveMQ Artemis ensures high availability and eliminates single points of failure.
-
-The knowledge and experience gained from this project are directly applicable to real-world Big Data systems and provide a solid foundation for future work in distributed computing and large-scale data processing.
-\end{successbox}
 
 \subsubsection{Transversal Services Deployment (Node 2 Only)}
 The shared infrastructure services (\textbf{MongoDB} and the \textbf{Nginx Load Balancer}) are implemented centrally on Node 2.
