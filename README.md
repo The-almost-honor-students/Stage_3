@@ -3,6 +3,7 @@
 This project corresponds to **Stage 3** of the *Project Gutenberg Book Search Engine*, developed using a modular and decoupled architecture.  
 In this stage, four independent services —**Ingestion**, **Indexing**, **Search**, and **Control**— were implemented to handle the complete data flow from book retrieval to indexed search and performance benchmarking.
 
+
 ---
 
 ## Table of Contents
@@ -282,48 +283,242 @@ Benchmark results are printed to the console and may include:
 
 ---
 
-## 8. Cluster Deployment
+## 8. Laboratory Deployment Procedure: Distributed Cluster Setup
 
-The system is configured to run as a distributed cluster across three nodes:
-- **Node 1**: 10.26.14.223 (Mongo + ActiveMQ + Hazelcast + Ingestion + Indexing + Search)
-- **Node 2**: 10.26.14.222 (ActiveMQ + Hazelcast + Ingestion + Indexing + Search)
-- **Node 3**: 10.26.14.221 (ActiveMQ + Hazelcast + Ingestion + Indexing + Search)
+### 8.1 Cluster Node Configuration
 
-### Prerequisites
-- Docker and Docker Compose installed on all nodes.
-- Network connectivity between nodes on ports:
-  - **5701** (Hazelcast)
-  - **61616** (ActiveMQ)
+The distributed system is deployed across **three laboratory nodes**. The final digit of the IP determines the node number:
+
+| **Node** | **IP Address** | **Role** |
+|----------|----------------|----------|
+| **Node 1** | `10.26.14.221` | Microservices (Crawler, Indexer, Search) + ActiveMQ |
+| **Node 2** | `10.26.14.222` | Microservices + Transversal Services (MongoDB, Nginx, Prometheus, Jaeger, Loki, Grafana, OTel Collector) + ActiveMQ |
+| **Node 3** | `10.26.14.223` | Microservices (Crawler, Indexer, Search) + ActiveMQ |
+
+### 8.2 Prerequisites
+
+- **Docker** and **Docker Compose** installed on all nodes
+- Network connectivity between nodes on the following ports:
+  - **5701** (Hazelcast distributed cache)
+  - **61616** (ActiveMQ Artemis broker)
   - **9090** (Search Service)
+  - **8080** (Indexer Service)
+  - **7070** (Crawler Service)
   - **8000** (NGINX Load Balancer)
+  - **27017** (MongoDB)
+  - **3000** (Grafana)
+  - **4317/4318** (OpenTelemetry Collector)
+  - **16686** (Jaeger UI)
+  - **1010** (Prometheus)
+  - **3100** (Loki)
 
-### Deployment Steps
+### 8.3 Environment Setup
 
-1. **Set Environment Variables**
-   On each node, set the `NODE_IP` variable before running docker-compose:
+#### 8.3.1 Python Environment Preparation for Load Testing
+
+Before executing Locust in the laboratory machines, install it at user-level to avoid permission issues:
+
+```bash
+# Install Locust using the --user flag
+pip install locust --user
+
+# Verify Locust installation (optional)
+python -m locust --version
+```
+
+### 8.4 Service Deployment
+
+#### 8.4.1 Node-Specific Services Deployment
+
+On each of the three cluster nodes, execute the `docker compose` command to deploy the microservices specific to that node (Crawler, Indexer, Search, ActiveMQ):
+
+**On Node 1 (10.26.14.221):**
+```bash
+docker compose -f docker-compose-node1.yaml up -d
+```
+
+**On Node 2 (10.26.14.222):**
+```bash
+docker compose -f docker-compose-node2.yaml up -d
+```
+
+**On Node 3 (10.26.14.223):**
+```bash
+docker compose -f docker-compose-node3.yaml up -d
+```
+
+#### 8.4.2 Transversal Services Deployment (Node 2 Only)
+
+The shared infrastructure services (**MongoDB**, **Nginx Load Balancer**, **Prometheus**, **Jaeger**, **Loki**, **Grafana**, and **OpenTelemetry Collector**) are deployed centrally on **Node 2**.
+
+```bash
+# Navigate to the transversal services directory
+cd transversal_services
+
+# Execute the deployment of transversal services
+docker compose up -d
+```
+
+At this point, all microservices and transversal services should be deployed and running across the cluster.
+
+#### 8.4.3 Docker Images Used
+
+The following multi-architecture Docker images (AMD64 and ARM64) are published on Docker Hub:
+
+- **Crawler Service**: `giselabcr8888/crawler:1.2.0`
+- **Indexer Service**: `giselabcr8888/indexer:1.1.0`
+- **Search Service**: `giselabcr8888/search:1.2.1`
+
+All images are available at: https://hub.docker.com/repositories/giselabcr8888
+
+### 8.5 Datalake Configuration and Synchronization
+
+#### 8.5.1 Execution Policy Configuration (Windows/PowerShell)
+
+Before executing the configuration script on Windows, modify the PowerShell execution policy:
+
+```powershell
+Set-ExecutionPolicy RemoteSigned -Scope Process
+```
+
+#### 8.5.2 Syncthing Configuration Script Execution
+
+To configure Syncthing in the laboratory machines, execute the script with an ExecutionPolicy bypass:
+
+```powershell
+powershell -ExecutionPolicy ByPass -file .\configure_syncthing.ps1
+```
+
+Or simply:
+
+```bash
+./configure_syncthing.ps1
+```
+
+#### 8.5.3 Accepting Datalake Connections
+
+Ensure that the network or firewall configurations on all three machines allow the necessary connections for sharing the datalake folder, so that:
+- All containers can access the books
+- Cluster members (Hazelcast and ActiveMQ) can communicate effectively
+
+### 8.6 System Verification and Monitoring
+
+After deploying and configuring the services, verify their correct operation by reviewing the container logs:
+
+```bash
+# Verify Crawler Logs
+docker logs <crawler_container_id> -f
+
+# Verify Indexer Logs
+docker logs <indexer_container_id> -f
+
+# Verify Search Service Logs
+docker logs <search_container_id> -f
+```
+
+**Verify MongoDB Express:**  
+Access the MongoDB Express interface to verify the persistence of metadata and the index:
+```
+http://10.26.14.222:8081
+```
+
+### 8.7 Observability Verification: Metrics, Traces and Logs
+
+Once the transversal services are deployed on Node 2, verify that the monitoring stack is functioning correctly. The observability pipeline consists of:
+
+- **Prometheus** – collects metrics from microservices
+- **Jaeger** – stores and displays distributed traces
+- **Loki** – aggregates logs from all containers
+- **Grafana** – unified dashboard for visualizing metrics, traces and logs
+
+#### 8.7.1 Accessing Grafana
+
+Grafana runs at:
+```
+http://10.26.14.222:3000
+```
+
+**Default login:**
+- User: `admin`
+- Password: `admin`
+
+Three data sources appear preconfigured:
+- **Prometheus** (metrics)
+- **Loki** (logs)
+- **Jaeger** (traces)
+
+#### 8.7.2 Importing the Search Dashboard in Grafana
+
+In the laboratory setup, the Search Service dashboard can be imported manually:
+
+1. Open Grafana: `http://10.26.14.222:3000`
+2. Navigate to: **Dashboards** → **New** → **Import**
+3. Upload the file: `search_service.json`
+4. Select the Prometheus/Loki data sources if Grafana requests mapping
+5. Click **Import** to create the dashboard
+
+#### 8.7.3 What Must Be Validated
+
+- **Metrics**: Prometheus panels show activity from Search, Crawler, Indexer
+- **Traces**: Jaeger shows multi-service traces from the `/search` endpoint
+- **Logs**: Loki correctly displays logs from all microservices
+
+### 8.8 Load Testing with Locust
+
+To evaluate the cluster's performance under stress, Locust is used to simulate high concurrency directed at the Nginx load balancer.
+
+```bash
+# Navigate to the load-testing folder
+cd load-testing
+
+# Run Locust (laboratory execution)
+python -m locust -f locustfile.py
+```
+
+Access the Locust web interface on port **8089** of the host machine:
+```
+http://localhost:8089
+```
+
+**Configure and run the load test:**
+- **Number of Users**: 500 concurrent users
+- **Spawn Rate**: 1 user/s (or the value used in the lab)
+- **Host**: `http://localhost:8000/search`
+
+**Monitor key metrics** such as:
+- Requests/s
+- 95th Percentile (P95) latency
+
+The objective of this test is to stress the entrypoint (**Nginx** on port `8000`), which is responsible for distributing the load across the Search Service replicas in the cluster.
+
+### 8.9 Functional Search Service Test
+
+Perform a manual search test using a browser:
+
+```
+http://localhost:9090/search?q=poems
+```
+
+Verify that the response is correct and originated from one of the Search Services in the cluster.
+
+### 8.10 Fault Tolerance Test (Failover)
+
+To verify the High Availability and fault tolerance of the distributed system:
+
+1. **Select a node** (e.g., Node 1) and stop its microservice containers:
    ```bash
-   export NODE_IP=<current_node_ip>  # e.g., 10.26.14.223
+   # On Node 1 machine
+   docker compose -f docker-compose-node1.yaml stop
    ```
 
-2. **Deploy to Nodes**
-   Use the provided deployment script to deploy to each node:
-   ```bash
-   ./deployment/deploy-node.sh <node_ip>
-   ```
-   Or manually copy the project and run:
-   ```bash
-   docker-compose -f docker-compose-cluster.yaml up -d
-   ```
+2. **Verification:**
+   - Observe the logs of the remaining nodes (Node 2 and 3) to confirm the ActiveMQ and Hazelcast reconnections
+   - Repeat the functional search test (`/search?q=Love`) to confirm that the system remains operational without interruptions, with traffic successfully being redirected to the remaining nodes
 
-3. **Start Load Balancer**
-   On the machine hosting NGINX (can be any node or a separate one):
-   ```bash
-   cd nginx
-   docker-compose up -d
-   ```
-   The search service will be available at `http://<nginx-ip>:8000/search`.
+### 8.11 Architecture Components
 
-### Architecture
-- **Hazelcast**: Forms a TCP/IP cluster across all 3 nodes for distributed caching of the inverted index.
-- **ActiveMQ**: Configured as a Network of Brokers, allowing seamless message propagation between nodes.
-- **NGINX**: Distributes search traffic across the available Search Service instances using a `least_conn` strategy.
+- **Hazelcast**: Forms a TCP/IP cluster across all 3 nodes for distributed caching of the inverted index
+- **ActiveMQ Artemis**: Configured as a 3-node cluster with message redistribution (`redistribution-delay=0`), allowing seamless message propagation between nodes
+- **NGINX**: Distributes search traffic across the available Search Service instances using a `least_conn` strategy
+- **MongoDB**: Centralized persistent storage for book metadata and inverted index
+- **OpenTelemetry Stack**: Comprehensive observability with metrics (Prometheus), traces (Jaeger), and logs (Loki), all visualized in Grafana
