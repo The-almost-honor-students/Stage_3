@@ -1,8 +1,6 @@
 # Stage 3 — The Almost Honor Students
 
 This project corresponds to **Stage 3** of the *Project Gutenberg Book Search Engine*, developed using a modular and decoupled architecture.  
-In this stage, four independent services —**Ingestion**, **Indexing**, **Search**, and **Control**— were implemented to handle the complete data flow from book retrieval to indexed search and performance benchmarking.
-
 
 ---
 
@@ -10,14 +8,24 @@ In this stage, four independent services —**Ingestion**, **Indexing**, **Searc
 1. [Architecture Overview](#1-architecture-overview)
 2. [Implemented Functionality](#2-implemented-functionality)  
 3. [Environment Variables Configuration](#3-environment-variables-configuration)  
- 2.1 [Ingestion Service](#ingestion-service)  
- 2.2 [Indexing Service](#indexing-service)  
- 2.3 [Search Service](#search-service)  
- 2.4 [Control Service](#control-service)  
+   - 3.1 [Crawler Service](#crawler-service)  
+   - 3.2 [Indexing Service](#indexing-service)  
+   - 3.3 [Search Service](#search-service)  
 4. [Building the Project](#4-building-the-project)  
 5. [Running with Docker](#5-running-with-docker)  
 6. [Example Usage and Test Queries](#6-example-usage-and-test-queries)  
-7. [Benchmarking](#7-benchmarking)  
+7. [Laboratory Deployment Procedure: Distributed Cluster Setup](#7-laboratory-deployment-procedure-distributed-cluster-setup)
+   - 8.1 [Cluster Node Configuration](#81-cluster-node-configuration)
+   - 8.2 [Prerequisites](#82-prerequisites)
+   - 8.3 [Environment Setup](#83-environment-setup)
+   - 8.4 [Service Deployment](#84-service-deployment)
+   - 8.5 [Datalake Configuration and Synchronization](#85-datalake-configuration-and-synchronization)
+   - 8.6 [System Verification and Monitoring](#86-system-verification-and-monitoring)
+   - 8.7 [Observability Verification: Metrics, Traces and Logs](#87-observability-verification-metrics-traces-and-logs)
+   - 8.8 [Load Testing with Locust](#88-load-testing-with-locust)
+   - 8.9 [Functional Search Service Test](#89-functional-search-service-test)
+   - 8.10 [Fault Tolerance Test (Failover)](#810-fault-tolerance-test-failover)
+   - 8.11 [Architecture Components](#811-architecture-components)  
 
 ---
 
@@ -36,15 +44,16 @@ The project follows **Clean Architecture / Hexagonal Architecture** principles, 
 
 ## 2. Implemented Functionality
 
-- Modular implementation of **Ingestion**, **Indexing**, **Search**, and **Control** services.  
-- REST APIs built with **Javalin**.  
-- Flexible configuration via environment variables (supports both `.env` files and Docker environment variables).  
-- Persistent data storage in **MongoDB** (`metadata` and `inverted_index` collections).  
-- Text preprocessing and tokenization for indexing.  
-- Workflow orchestration through the **Control Service**.  
-- Integration of **JMH** benchmarking in all modules.  
-- Full Docker containerization with `docker-compose`.  
-- Clear and incremental **Git history** showing contributions and progress.ç
+- Modular implementation of **Crawler**, **Indexing**, and **Search** services  
+- Event-driven architecture using **ActiveMQ Artemis** clustering  
+- Distributed caching with **Hazelcast** for high-performance search  
+- REST APIs built with **Javalin**  
+- Flexible configuration via environment variables (supports both `.env` files and Docker environment variables)  
+- Persistent data storage in **MongoDB** (`metadata` and `inverted_index` collections)  
+- Text preprocessing and tokenization for indexing  
+- Full Docker containerization with multi-node deployment support  
+- High availability and fault tolerance through clustering  
+- Comprehensive observability with **OpenTelemetry**, **Prometheus**, **Jaeger**, **Loki**, and **Grafana**
   
 ---
 
@@ -58,14 +67,15 @@ The services support two configuration methods:
 
 ### Configuration Variables by Service
 
-### Ingestion Service
+### Crawler Service
 
-**Purpose:** Downloads books from Project Gutenberg, stores them temporarily, and forwards them to the Indexing service.  
+**Purpose:** Downloads books from Project Gutenberg and publishes events to ActiveMQ for indexing.  
 **File:** `resources/.env`
 
 ```env
 URL_GUTENBERG=https://www.gutenberg.org
 PORT=7070
+ACTIVEMQ_URL=failover:(tcp://10.26.14.221:61616,tcp://10.26.14.222:61616,tcp://10.26.14.223:61616)
 ```
 
 ---
@@ -99,19 +109,6 @@ PORT=9090
 ```
 
 ---
-
-### Control Service
-
-**Purpose:** Orchestrates the workflow by coordinating ingestion, indexing, and search services.  
-It also triggers benchmarking routines using **JMH** to evaluate performance.  
-**File:** `resources/.env`
-
-```env
-INGESTION_URL=http://localhost:7070
-INDEXING_URL=http://localhost:8080
-SEARCH_URL=http://localhost:9090
-```
-
 
 > **💡 When are `.env` files needed?**  
 > - **Running with Docker** → `.env` files are **NOT needed**. Docker Compose passes all variables automatically.  
@@ -174,10 +171,9 @@ docker buildx build \
 
 
 2. Once the containers are running, the services will be available at:
-   - Ingestion → `http://localhost:7070`
+   - Crawler → `http://localhost:7070`
    - Indexing → `http://localhost:8080`
    - Search → `http://localhost:9090`
-   - Control → `http://localhost:6060`
 
 ---
 
@@ -190,102 +186,28 @@ Below is a list of all available endpoints and example calls for each one. In ca
 
 | Service      | Method | Endpoint                        | Description |
 |---------------|---------|----------------------------------|-------------|
-| **Ingestion** | POST    | `/ingest/{bookId}`              | Downloads a specific book from Project Gutenberg by ID and prepares it for indexing. |
-| **Ingestion** | GET     | `/ingest/list`                  | Returns the list of ingested books. |
-| **Ingestion** | GET     | `/ingest/status/{bookId}`       | Returns the ingestion status for a specific book. |
-| **Indexing**  | POST    | `/index/update/{bookId}`        | Processes and indexes the specified book. |
-| **Search**    | GET     | `/search?query=<keyword>`       | Searches for a specific keyword in the inverted index. |
+| **Search**    | GET     | `/search?q=<keyword>`           | Searches for a specific keyword in the inverted index. |
 
 ### Example Queries
 
-#### Ingest a Book
-Example for book ID 6036:
-
-```bash
-curl -X POST http://localhost:7070/ingest/6036
-```
-
-#### Get the Ingested Book List
-
-```bash
-curl http://localhost:7070/ingest/list
-```
-
-#### Check Ingestion Status of a Book
-Example for book ID 6036:
-
-```bash
-curl http://localhost:7070/ingest/status/6036
-```
-
-#### Index a Book
-Example for book ID 6036:
-
-```bash
-curl -X POST "http://localhost:8080/index/update/6036"
-```
-
 #### Search for a Keyword
-Example for the word “love”:
+Example for the word "love":
 
 ```bash
-curl "http://localhost:9090/search?query=love"
+curl "http://localhost:9090/search?q=love"
 ```
 
-#### Run the Complete Workflow via Control Service
+Or via the Nginx load balancer:
 
 ```bash
-curl -X POST http://localhost:6060/control/start
+curl "http://localhost:8000/search?q=love"
 ```
 
 ---
 
-## 7. Benchmarking
+## 7. Laboratory Deployment Procedure: Distributed Cluster Setup
 
-Performance benchmarking has been implemented in **all services** — Ingestion, Indexing, Search, and Control — using **JMH (Java Microbenchmark Harness)**.  
-Each benchmark evaluates throughput, latency, and scalability under different workloads.
-
-### Location
-
-Benchmarks are distributed across the modules:
-- **Control (End-to-End)**: `control/src/main/java/com/tahs/benchmark/`
-- **Ingestion**: `crawler/src/main/java/com/tahs/benchmark/`
-- **Indexing**: `indexer/src/main/java/com/tahs/benchmark/`
-- **Search**: `search/src/main/java/com/tahs/benchmark/`
-
-### How to Execute
-
-#### 1. End-to-End Benchmark (via Control)
-
-1. Ensure all services are **running via Docker Compose**:
-
-   ```bash
-   docker-compose up -d
-   ```
-
-2. Once the containers are up and connected, execute the benchmark from the **Control module**:
-
-   ```bash
-   cd control/src/main/java/com/tahs
-   java Main
-   ```
-
-This will automatically perform end-to-end benchmarking of ingestion, indexing, and search through the orchestrator.
-
-Benchmark results are printed to the console and may include:
-- Operations per second (ops/s)
-- Execution time per thread
-- CPU and memory usage across services
-
-
-
-
-
----
-
-## 8. Laboratory Deployment Procedure: Distributed Cluster Setup
-
-### 8.1 Cluster Node Configuration
+### 7.1 Cluster Node Configuration
 
 The distributed system is deployed across **three laboratory nodes**. The final digit of the IP determines the node number:
 
