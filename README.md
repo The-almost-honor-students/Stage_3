@@ -15,17 +15,17 @@ This project corresponds to **Stage 3** of the *Project Gutenberg Book Search En
 5. [Running with Docker](#5-running-with-docker)  
 6. [Example Usage and Test Queries](#6-example-usage-and-test-queries)  
 7. [Laboratory Deployment Procedure: Distributed Cluster Setup](#7-laboratory-deployment-procedure-distributed-cluster-setup)
-   - 8.1 [Cluster Node Configuration](#81-cluster-node-configuration)
-   - 8.2 [Prerequisites](#82-prerequisites)
-   - 8.3 [Environment Setup](#83-environment-setup)
-   - 8.4 [Service Deployment](#84-service-deployment)
-   - 8.5 [Datalake Configuration and Synchronization](#85-datalake-configuration-and-synchronization)
-   - 8.6 [System Verification and Monitoring](#86-system-verification-and-monitoring)
-   - 8.7 [Observability Verification: Metrics, Traces and Logs](#87-observability-verification-metrics-traces-and-logs)
-   - 8.8 [Load Testing with Locust](#88-load-testing-with-locust)
-   - 8.9 [Functional Search Service Test](#89-functional-search-service-test)
-   - 8.10 [Fault Tolerance Test (Failover)](#810-fault-tolerance-test-failover)
-   - 8.11 [Architecture Components](#811-architecture-components)  
+   - 7.1 [Cluster Node Configuration](#71-cluster-node-configuration)
+   - 7.2 [Prerequisites](#72-prerequisites)
+   - 7.3 [Environment Setup](#73-environment-setup)
+   - 7.4 [Service Deployment](#74-service-deployment)
+   - 7.5 [Datalake Configuration and Synchronization](#75-datalake-configuration-and-synchronization)
+   - 7.6 [System Verification and Monitoring](#76-system-verification-and-monitoring)
+   - 7.7 [Observability Verification: Metrics, Traces and Logs](#77-observability-verification-metrics-traces-and-logs)
+   - 7.8 [Load Testing with Locust](#78-load-testing-with-locust)
+   - 7.9 [Functional Search Service Test](#79-functional-search-service-test)
+   - 7.10 [Fault Tolerance Test (Failover)](#710-fault-tolerance-test-failover)
+   - 7.11 [Architecture Components](#711-architecture-components)  
 
 ---
 
@@ -217,7 +217,7 @@ The distributed system is deployed across **three laboratory nodes**. The final 
 | **Node 2** | `10.26.14.222` | Microservices + Transversal Services (MongoDB, Nginx, Prometheus, Jaeger, Loki, Grafana, OTel Collector) + ActiveMQ |
 | **Node 3** | `10.26.14.223` | Microservices (Crawler, Indexer, Search) + ActiveMQ |
 
-### 8.2 Prerequisites
+### 7.2 Prerequisites
 
 - **Docker** and **Docker Compose** installed on all nodes
 - Network connectivity between nodes on the following ports:
@@ -234,9 +234,9 @@ The distributed system is deployed across **three laboratory nodes**. The final 
   - **1010** (Prometheus)
   - **3100** (Loki)
 
-### 8.3 Environment Setup
+### 7.3 Environment Setup
 
-#### 8.3.1 Python Environment Preparation for Load Testing
+#### 7.3.1 Python Environment Preparation for Load Testing
 
 Before executing Locust in the laboratory machines, install it at user-level to avoid permission issues:
 
@@ -248,9 +248,9 @@ pip install locust --user
 python -m locust --version
 ```
 
-### 8.4 Service Deployment
+### 7.4 Service Deployment
 
-#### 8.4.1 Node-Specific Services Deployment
+#### 7.4.1 Node-Specific Services Deployment
 
 On each of the three cluster nodes, execute the `docker compose` command to deploy the microservices specific to that node (Crawler, Indexer, Search, ActiveMQ):
 
@@ -269,7 +269,7 @@ docker compose -f docker-compose-node2.yaml up -d
 docker compose -f docker-compose-node3.yaml up -d
 ```
 
-#### 8.4.2 Transversal Services Deployment (Node 2 Only)
+#### 7.4.2 Transversal Services Deployment (Node 2 Only)
 
 The shared infrastructure services (**MongoDB**, **Nginx Load Balancer**, **Prometheus**, **Jaeger**, **Loki**, **Grafana**, and **OpenTelemetry Collector**) are deployed centrally on **Node 2**.
 
@@ -283,7 +283,7 @@ docker compose up -d
 
 At this point, all microservices and transversal services should be deployed and running across the cluster.
 
-#### 8.4.3 Docker Images Used
+#### 7.4.3 Docker Images Used
 
 The following multi-architecture Docker images (AMD64 and ARM64) are published on Docker Hub:
 
@@ -293,9 +293,9 @@ The following multi-architecture Docker images (AMD64 and ARM64) are published o
 
 All images are available at: https://hub.docker.com/repositories/giselabcr8888
 
-### 8.5 Datalake Configuration and Synchronization
+### 7.5 Datalake Configuration and Synchronization
 
-#### 8.5.1 Execution Policy Configuration (Windows/PowerShell)
+#### 7.5.1 Execution Policy Configuration (Windows/PowerShell)
 
 Before executing the configuration script on Windows, modify the PowerShell execution policy:
 
@@ -303,7 +303,7 @@ Before executing the configuration script on Windows, modify the PowerShell exec
 Set-ExecutionPolicy RemoteSigned -Scope Process
 ```
 
-#### 8.5.2 Syncthing Configuration Script Execution
+#### 7.5.2 Syncthing Configuration Script Execution
 
 To configure Syncthing in the laboratory machines, execute the script with an ExecutionPolicy bypass:
 
@@ -317,13 +317,13 @@ Or simply:
 ./configure_syncthing.ps1
 ```
 
-#### 8.5.3 Accepting Datalake Connections
+#### 7.5.3 Accepting Datalake Connections
 
 Ensure that the network or firewall configurations on all three machines allow the necessary connections for sharing the datalake folder, so that:
 - All containers can access the books
 - Cluster members (Hazelcast and ActiveMQ) can communicate effectively
 
-### 8.6 System Verification and Monitoring
+### 7.6 System Verification and Monitoring
 
 After deploying and configuring the services, verify their correct operation by reviewing the container logs:
 
@@ -344,7 +344,7 @@ Access the MongoDB Express interface to verify the persistence of metadata and t
 http://10.26.14.222:8081
 ```
 
-### 8.7 Observability Verification: Metrics, Traces and Logs
+### 7.7 Observability Verification: Metrics, Traces and Logs
 
 Once the transversal services are deployed on Node 2, verify that the monitoring stack is functioning correctly. The observability pipeline consists of:
 
@@ -353,7 +353,7 @@ Once the transversal services are deployed on Node 2, verify that the monitoring
 - **Loki** – aggregates logs from all containers
 - **Grafana** – unified dashboard for visualizing metrics, traces and logs
 
-#### 8.7.1 Accessing Grafana
+#### 7.7.1 Accessing Grafana
 
 Grafana runs at:
 ```
@@ -369,7 +369,7 @@ Three data sources appear preconfigured:
 - **Loki** (logs)
 - **Jaeger** (traces)
 
-#### 8.7.2 Importing the Search Dashboard in Grafana
+#### 7.7.2 Importing the Search Dashboard in Grafana
 
 In the laboratory setup, the Search Service dashboard can be imported manually:
 
@@ -379,13 +379,13 @@ In the laboratory setup, the Search Service dashboard can be imported manually:
 4. Select the Prometheus/Loki data sources if Grafana requests mapping
 5. Click **Import** to create the dashboard
 
-#### 8.7.3 What Must Be Validated
+#### 7.7.3 What Must Be Validated
 
 - **Metrics**: Prometheus panels show activity from Search, Crawler, Indexer
 - **Traces**: Jaeger shows multi-service traces from the `/search` endpoint
 - **Logs**: Loki correctly displays logs from all microservices
 
-### 8.8 Load Testing with Locust
+### 7.8 Load Testing with Locust
 
 To evaluate the cluster's performance under stress, Locust is used to simulate high concurrency directed at the Nginx load balancer.
 
@@ -413,7 +413,7 @@ http://localhost:8089
 
 The objective of this test is to stress the entrypoint (**Nginx** on port `8000`), which is responsible for distributing the load across the Search Service replicas in the cluster.
 
-### 8.9 Functional Search Service Test
+### 7.9 Functional Search Service Test
 
 Perform a manual search test using a browser:
 
@@ -423,7 +423,7 @@ http://localhost:9090/search?q=poems
 
 Verify that the response is correct and originated from one of the Search Services in the cluster.
 
-### 8.10 Fault Tolerance Test (Failover)
+### 7.10 Fault Tolerance Test (Failover)
 
 To verify the High Availability and fault tolerance of the distributed system:
 
@@ -437,7 +437,7 @@ To verify the High Availability and fault tolerance of the distributed system:
    - Observe the logs of the remaining nodes (Node 2 and 3) to confirm the ActiveMQ and Hazelcast reconnections
    - Repeat the functional search test (`/search?q=Love`) to confirm that the system remains operational without interruptions, with traffic successfully being redirected to the remaining nodes
 
-### 8.11 Architecture Components
+### 7.11 Architecture Components
 
 - **Hazelcast**: Forms a TCP/IP cluster across all 3 nodes for distributed caching of the inverted index
 - **ActiveMQ Artemis**: Configured as a 3-node cluster with message redistribution (`redistribution-delay=0`), allowing seamless message propagation between nodes
